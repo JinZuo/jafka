@@ -160,4 +160,18 @@ public class MessageTest {
         assertFalse(buffer.hasRemaining());
     }
 
+    /**
+         * Test new message version with id
+         */
+    @Test
+    public void testNewMessageVersion(){
+        Message m =  new Message(Message.MAGIC_VERSION_WITH_ID,"demo".getBytes(),2);
+        int brokerId = m.brokerId();
+        assertEquals(-1,brokerId);
+        MessageId msgId = m.getMessageId();
+        assertEquals(2,msgId.getPartitionId());
+        System.out.println(msgId);
+    }
+
+
 }

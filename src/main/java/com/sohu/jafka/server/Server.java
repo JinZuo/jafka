@@ -59,10 +59,13 @@ public class Server implements Closeable {
     private final File logDir;
 
     private final ServerInfo serverInfo = new ServerInfo();
-
+    
+    //expose broker id to Message
+    public static int brokerId = -1;
     //
     public Server(ServerConfig config) {
         this.config = config;
+        brokerId = config.getBrokerId();
         logDir = new File(config.getLogDir());
         if (!logDir.exists()) {
             logDir.mkdirs();

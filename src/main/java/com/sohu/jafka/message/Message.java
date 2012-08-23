@@ -23,6 +23,7 @@ import java.nio.ByteBuffer;
 
 import com.sohu.jafka.api.ICalculable;
 import com.sohu.jafka.common.UnknownMagicByteException;
+import com.sohu.jafka.server.Server;
 import com.sohu.jafka.utils.Utils;
 
 /**
@@ -46,7 +47,14 @@ import com.sohu.jafka.utils.Utils;
  */
 public class Message implements ICalculable {
 
-    private static final byte MAGIC_VERSION2 = 1;
+    //expose message version number
+    public static final byte MAGIC_VERSION2 = 1;
+
+    /**
+     * new message version providing message id
+     * @author rockybean(smilingrockybean@gmail.com)
+     */
+    public static final byte MAGIC_VERSION_WITH_ID = 64;
 
     public static final byte CurrentMagicValue = 1;
 
@@ -56,7 +64,15 @@ public class Message implements ICalculable {
 
     public static final byte ATTRIBUTE_OFFSET = MAGIC_OFFSET + MAGIC_LENGTH;
 
-    public static final byte ATTRIBUT_ELENGTH = 1;
+    public static final byte ATTRIBUTE_LENGTH = 1;
+
+    /* broker id in MAGIC_VERSION_WITH_ID*/
+    public static final byte BROKER_ID_OFFSET = ATTRIBUTE_OFFSET + ATTRIBUTE_LENGTH;
+    public static final byte BROKER_ID_LENGTH = 4;
+
+    /* message id in MAGIC_VERSION_WITH_ID*/
+    public static final byte MESSAGE_ID_OFFSET = BROKER_ID_OFFSET + BROKER_ID_LENGTH;
+    public static final byte MESSAGE_ID_LENGTH = 8;
 
     /**
      * Specifies the mask for the compression code. 2 bits to hold the
@@ -75,7 +91,9 @@ public class Message implements ICalculable {
     public static int crcOffset(byte magic) {
         switch (magic) {
             case MAGIC_VERSION2:
-                return ATTRIBUTE_OFFSET + ATTRIBUT_ELENGTH;
+                return ATTRIBUTE_OFFSET + ATTRIBUTE_LENGTH;
+            case MAGIC_VERSION_WITH_ID:
+                return MESSAGE_ID_OFFSET + MESSAGE_ID_LENGTH;
 
         }
         throw new UnknownMagicByteException(format("Magic byte value of %d is unknown", magic));
@@ -118,19 +136,48 @@ public class Message implements ICalculable {
         this.messageSize = buffer.limit();
     }
 
+    /**
+     * add magic as a parameter
+     * @param magic
+     * @param checksum
+     * @param bytes
+     * @param compressionCodec
+     */
+     public Message(byte magic, long checksum, byte[] bytes, CompressionCodec compressionCodec,int partitionId) {
+          this(ByteBuffer.allocate(Message.headerSize(magic)+bytes.length));
+          buffer.put(magic);
+          byte attributes = 0;
+          if(compressionCodec.codec > 0){
+              attributes = (byte)(attributes | (CompressionCodeMask & compressionCodec.codec));
+          }
+          buffer.put(attributes);
+
+          //new message version,with broker id and message id. Though this is not a good way to add a new message version here, message version does not often change.
+          //todo: find a better method to add a new message version
+          if(magic == MAGIC_VERSION_WITH_ID){
+            buffer.putInt(Server.brokerId);
+            if(partitionId == -1){
+                throw new IllegalArgumentException("PartitionId could not be -1 !");
+            }
+            buffer.putLong(MessageIdCenter.generateId(partitionId));
+          }
+          
+          Utils.putUnsignedInt(buffer,checksum);
+          buffer.put(bytes);
+          buffer.rewind();
+     }
+
     public Message(long checksum, byte[] bytes, CompressionCodec compressionCodec) {
-        this(ByteBuffer.allocate(Message.headerSize(Message.CurrentMagicValue) + bytes.length));
-        buffer.put(CurrentMagicValue);
-        byte attributes = 0;
-        if (compressionCodec.codec > 0) {
-            attributes = (byte) (attributes | (CompressionCodeMask & compressionCodec.codec));
-        }
-        buffer.put(attributes);
-        Utils.putUnsignedInt(buffer, checksum);
-        buffer.put(bytes);
-        buffer.rewind();
+        this(CurrentMagicValue,checksum,bytes,compressionCodec,-1);
     }
 
+    public Message(byte magic,long checksum, byte[] bytes, int partitionId) {
+        this(magic,checksum, bytes, CompressionCodec.NoCompressionCodec,partitionId);
+    }
+
+    public Message(byte magic,byte[] bytes, CompressionCodec compressionCodec, int partitionId) {
+        this(magic,Utils.crc32(bytes), bytes, compressionCodec,partitionId);
+    }
     public Message(long checksum, byte[] bytes) {
         this(checksum, bytes, CompressionCodec.NoCompressionCodec);
     }
@@ -147,6 +194,10 @@ public class Message implements ICalculable {
      */
     public Message(byte[] bytes) {
         this(bytes, CompressionCodec.NoCompressionCodec);
+    }
+
+    public Message(byte magic,byte[] bytes,int partitionId) {
+        this(magic,bytes, CompressionCodec.NoCompressionCodec, partitionId);
     }
 
     //
@@ -169,6 +220,19 @@ public class Message implements ICalculable {
 
     public byte attributes() {
         return buffer.get(ATTRIBUTE_OFFSET);
+    }
+
+
+    public int brokerId(){
+        return buffer.getInt(BROKER_ID_OFFSET);
+    }
+
+    public long messageId(){
+        return buffer.getLong(MESSAGE_ID_OFFSET);
+    }
+
+    public MessageId getMessageId(){
+        return new MessageId(messageId());
     }
 
     public CompressionCodec compressionCodec() {
