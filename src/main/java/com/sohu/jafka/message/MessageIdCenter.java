@@ -20,6 +20,8 @@ public class MessageIdCenter {
          * @return
          */
     public static synchronized long generateId(int partitionId) {
+            if(partitionId == -1)
+                return -1;
             long timestamp = System.currentTimeMillis();
             if(timestamp < lastTimestamp){
                 throw new RuntimeException("Clock move backwards!Refused to generate id,please check your system config!");

@@ -51,16 +51,6 @@ public class ProducerPoolData<V> {
         this.magic = magic;
     }
 
-
-    /**
-     * The subclass could overwrites ProducerData.createMagicBytes method to add wished bytes.
-     * @param contentBytes   the actual data bytes
-     * @return
-     */
-    public Message toMessage(byte[] contentBytes){
-        return new Message(magic,createMagicBytes(),contentBytes);
-    }
-
     /**
      * subclass could overwrite this method for producing different magicBytes for different magic value of message.jjjk
      * @return

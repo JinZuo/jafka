@@ -56,7 +56,7 @@ public class Message implements ICalculable {
      */
     public static final byte MAGIC_VERSION_WITH_ID = 64;
 
-    public static final byte CurrentMagicValue = 1;
+    public static final byte CurrentMagicValue = MAGIC_VERSION_WITH_ID;
 
     public static final byte MAGIC_OFFSET = 0;
 
@@ -128,7 +128,7 @@ public class Message implements ICalculable {
      */
     public static final int MinHeaderSize = headerSize((byte) 1);
 
-    final ByteBuffer buffer;
+    ByteBuffer buffer;
 
     private final int messageSize;
 
@@ -137,40 +137,58 @@ public class Message implements ICalculable {
         this.messageSize = buffer.limit();
     }
 
-    /**
-     * new message constructor with magicContentBytes
-     * @param magic
-     * @param magicContentBytes
-     * @param checksum
-     * @param msgContentBytes
-     * @param compressionCodec
-     */
-    public Message(byte magic,byte[] magicContentBytes,long checksum,byte[] msgContentBytes,CompressionCodec compressionCodec){
-        this(ByteBuffer.allocate(Message.headerSize(magic)+msgContentBytes.length));
-        buffer.put(magic);
+    public Message(int brokerId,long msgId,byte[] bytes){
+        this(brokerId,msgId,Utils.crc32(bytes),bytes,CompressionCodec.NoCompressionCodec);
+    }
 
-        byte attributes = 0;
+    public Message(int brokerId,long msgId,byte[] bytes,CompressionCodec codec){
+        this(brokerId,msgId,Utils.crc32(bytes),bytes,codec);
+    }
+    public Message(int brokerId,long msgId,long checksum,byte[] bytes,CompressionCodec compressionCodec){
+        this(ByteBuffer.allocate(headerSize(CurrentMagicValue)+bytes.length));
+        /*if(CurrentMagicValue < MAGIC_VERSION_WITH_ID) {
+            throw new IllegalStateException("Current message version is too old to use this constructor!");
+        }*/
+        buffer.put(CurrentMagicValue);
+        byte attr = 0;
         if(compressionCodec.codec > 0){
-            attributes = (byte)(attributes | (CompressionCodeMask & compressionCodec.codec));
+            attr = (byte)(attr | (compressionCodec.codec & CompressionCodeMask));
         }
-        buffer.put(attributes);
-
-        if(magicContentBytes != null && magicContentBytes.length > 0)
-            buffer.put(magicContentBytes);
-
+        buffer.put(attr);
+        if(CurrentMagicValue >= MAGIC_VERSION_WITH_ID){
+            buffer.putInt(brokerId);
+            buffer.putLong(msgId);
+        }
         Utils.putUnsignedInt(buffer,checksum);
-        buffer.put(msgContentBytes);
+        buffer.put(bytes);
         buffer.rewind();
     }
 
+    /**
+     * new message version should add its extra data after current version.
+     * You should reallocate buffer.
+     * todo:complete this method
+     * @param buffer
+     * @return
+     */
+    public ByteBuffer appendExtraData(ByteBuffer buffer,byte[] bytes) {
+        /*if(bytes != null || bytes.length > 0){
+
+        }*/
+        return buffer;
+    }
+
+    /**
+     * construct message without partitionid and messageId
+     * used by producer
+     * @param checksum
+     * @param bytes
+     * @param compressionCodec
+     */
     public Message(long checksum, byte[] bytes, CompressionCodec compressionCodec) {
-        this(MAGIC_VERSION2,null,checksum,bytes,compressionCodec);
+        this(-1,-1L,checksum,bytes,compressionCodec);
     }
 
-
-    public Message(byte magic,byte[] magicBytes,byte[] bytes, CompressionCodec compressionCodec) {
-        this(magic,magicBytes,Utils.crc32(bytes), bytes, compressionCodec);
-    }
     public Message(long checksum, byte[] bytes) {
         this(checksum, bytes, CompressionCodec.NoCompressionCodec);
     }
@@ -181,6 +199,7 @@ public class Message implements ICalculable {
 
     /**
      * create no compression message
+     * used by producer
      * 
      * @param bytes message data
      * @see CompressionCodec#NoCompressionCodec
@@ -189,13 +208,10 @@ public class Message implements ICalculable {
         this(bytes, CompressionCodec.NoCompressionCodec);
     }
 
-    public Message(byte magic,byte[] magicBytes,byte[] bytes) {
-        this(magic,magicBytes,bytes, CompressionCodec.NoCompressionCodec);
-    }
-
     //
     public int getSizeInBytes() {
-        return messageSize;
+        //return messageSize;
+        return buffer.limit();
     }
 
     /**
@@ -221,7 +237,7 @@ public class Message implements ICalculable {
      * @return
      */
     public int brokerId(){
-        if(magic() != MAGIC_VERSION_WITH_ID){
+        if(magic() < MAGIC_VERSION_WITH_ID){
             return -1;
         }
         return buffer.getInt(BROKER_ID_OFFSET);
@@ -233,17 +249,18 @@ public class Message implements ICalculable {
      * @return
      */
     public long messageId(){
-        if(magic() != MAGIC_VERSION_WITH_ID){
+        if(magic() < MAGIC_VERSION_WITH_ID){
             return -1;
         }
         return buffer.getLong(MESSAGE_ID_OFFSET);
     }
 
     public MessageId getMessageId(){
-        if(magic() != MAGIC_VERSION_WITH_ID){
+        long id = messageId();
+        if(magic() < MAGIC_VERSION_WITH_ID || id == -1){
             return null;
         }
-        return new MessageId(messageId());
+        return new MessageId(id);
     }
 
     public CompressionCodec compressionCodec() {
@@ -251,11 +268,10 @@ public class Message implements ICalculable {
         switch (magicByte) {
             case 0:
                 return CompressionCodec.NoCompressionCodec;
-            case 1:
-            case MAGIC_VERSION_WITH_ID:
+            default:
                 return CompressionCodec.valueOf(buffer.get(ATTRIBUTE_OFFSET) & CompressionCodeMask);
         }
-        throw new RuntimeException("Invalid magic byte " + magicByte);
+        //throw new RuntimeException("Invalid magic byte " + magicByte);
     }
 
     public long checksum() {

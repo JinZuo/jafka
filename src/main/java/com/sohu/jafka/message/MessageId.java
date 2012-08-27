@@ -19,12 +19,15 @@ public class MessageId {
     public static final long TIMESTAMP_MASK = 0x3ffffffffffL;
     public static final int TIMESTAMP_SHIFT = PARTITIONID_SHIFT + PARTITIONID_BITS;
 
-    private long messageId;
-    private long timestamp;
-    private int partitionId;
-    private int sequenceId;
+    private long messageId = -1L;
+    private long timestamp = -1L;
+    private int partitionId = -1;
+    private int sequenceId = -1;
 
     public MessageId(long id){
+        if(id == -1L){
+            return;
+        }
         messageId = id;
         sequenceId = (int)(id & SEQUENCE_MASK);
         partitionId = (int)((id >>> PARTITIONID_SHIFT) & PARTITIONID_MASK);
