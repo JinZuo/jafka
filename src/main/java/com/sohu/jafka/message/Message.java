@@ -56,7 +56,7 @@ public class Message implements ICalculable {
      */
     public static final byte MAGIC_VERSION_WITH_ID = 64;
 
-    public static final byte CurrentMagicValue = MAGIC_VERSION_WITH_ID;
+    public static  byte CurrentMagicValue = MAGIC_VERSION_WITH_ID;
 
     public static final byte MAGIC_OFFSET = 0;
 
@@ -74,6 +74,9 @@ public class Message implements ICalculable {
     public static final byte MESSAGE_ID_OFFSET = BROKER_ID_OFFSET + BROKER_ID_LENGTH;
     public static final byte MESSAGE_ID_LENGTH = 8;
     public static final int MAGIC_VERSION_WITH_ID_MAGIC_LENGTH = BROKER_ID_LENGTH + MESSAGE_ID_LENGTH;
+
+    public static final int MESSAGE_DATA_LENGTH = 4;
+
     /**
      * Specifies the mask for the compression code. 2 bits to hold the
      * compression codec. 0 is reserved to indicate no compression
@@ -109,6 +112,10 @@ public class Message implements ICalculable {
      *        and 1 0 for no compression 1 for compression
      */
     public static int payloadOffset(byte magic) {
+        return msgDataOffset(magic) + MESSAGE_DATA_LENGTH;
+    }
+
+    public static int msgDataOffset(byte magic){
         return crcOffset(magic) + CrcLength;
     }
 
@@ -160,6 +167,8 @@ public class Message implements ICalculable {
             buffer.putLong(msgId);
         }
         Utils.putUnsignedInt(buffer,checksum);
+        //add msg data length
+        buffer.putInt(bytes.length);
         buffer.put(bytes);
         buffer.rewind();
     }
@@ -224,7 +233,8 @@ public class Message implements ICalculable {
     }
 
     public int payloadSize() {
-        return getSizeInBytes() - headerSize(magic());
+        //return getSizeInBytes() - headerSize(magic());
+        return buffer.getInt(msgDataOffset(CurrentMagicValue));
     }
 
     public byte attributes() {
@@ -307,8 +317,8 @@ public class Message implements ICalculable {
     //
     @Override
     public String toString() {
-        return format("message(magic = %d, attributes = %d, crc = %d, payload = %s)",//
-                magic(), attributes(), checksum(), payload());
+        return format("message(magic = %d, attributes = %d, crc = %d, payload = %s,messageId=[%s])",//
+                magic(), attributes(), checksum(), payload(),getMessageId());
     }
 
     @Override

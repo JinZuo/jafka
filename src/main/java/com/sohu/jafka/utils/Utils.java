@@ -41,6 +41,7 @@ import java.util.zip.CRC32;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
+import com.sohu.jafka.message.Message;
 import com.sohu.jafka.mx.IMBeanName;
 
 /**
@@ -541,4 +542,5 @@ public class Utils {
             throw new IllegalStateException("delete directory failed: "+dir);
         }
     }
+
 }

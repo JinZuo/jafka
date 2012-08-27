@@ -28,6 +28,9 @@ import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 
+import com.sohu.jafka.log.LogManager;
+import com.sohu.jafka.message.Message;
+import com.sohu.jafka.utils.Utils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -66,6 +69,7 @@ public class SimpleConsumerTest extends BaseJafkaServer {
             Properties props = new Properties();
             //force flush message to disk
             //we will fetch nothing while messages have note been flushed to disk
+            props.put("brokerid","2");
             props.put("log.flush.interval", "1");
             props.put("log.default.flush.scheduler.interval.ms", "100");//flush to disk every 100ms
             props.put("log.file.size", "5120");//5k for rolling
@@ -73,6 +77,7 @@ public class SimpleConsumerTest extends BaseJafkaServer {
             props.put("port", ""+jafkaPort);
             jafka = createJafka(props);
             sendSomeMessages(1000,"demo","test");
+           //sendSomeMessages(1,"demo","test");
             flush(jafka);
             
             LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(1));
@@ -101,6 +106,7 @@ public class SimpleConsumerTest extends BaseJafkaServer {
                 }
                 over = index >= count;
             }
+
             for(StringProducerData sd:data) {
                 producer.send(sd);
             }
@@ -161,7 +167,11 @@ public class SimpleConsumerTest extends BaseJafkaServer {
             FetchRequest request = new FetchRequest("demo", i, 0, 1000 * 1000);
             ByteBufferMessageSet messages = consumer.fetch(request);
             for (MessageAndOffset msg : messages) {
-                //System.out.println("Receive message: " + Utils.toString(msg.message.payload(), "UTF-8"));
+                System.out.println("Receive message: " + Utils.toString(msg.message.payload(), "UTF-8"));
+                if(Message.CurrentMagicValue >= Message.MAGIC_VERSION_WITH_ID){
+                    assertEquals(2,msg.message.brokerId());
+                    assertEquals(i,msg.message.getMessageId().getPartitionId());
+                }
                 offset = Math.max(offset, msg.offset);
                 cnt++;
             }

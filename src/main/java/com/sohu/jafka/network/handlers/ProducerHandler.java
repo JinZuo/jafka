@@ -23,16 +23,17 @@ import com.sohu.jafka.api.ProducerRequest;
 import com.sohu.jafka.api.RequestKeys;
 import com.sohu.jafka.log.ILog;
 import com.sohu.jafka.log.LogManager;
-import com.sohu.jafka.message.ByteBufferMessageSet;
-import com.sohu.jafka.message.Message;
-import com.sohu.jafka.message.MessageAndOffset;
-import com.sohu.jafka.message.MessageIdCenter;
+import com.sohu.jafka.message.*;
 import com.sohu.jafka.mx.BrokerTopicStat;
 import com.sohu.jafka.network.Receive;
 import com.sohu.jafka.network.Send;
 import com.sohu.jafka.server.Server;
+import com.sohu.jafka.utils.Utils;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -64,8 +65,8 @@ public class ProducerHandler extends AbstractHandler {
     }
 
     protected void handleProducerRequest(ProducerRequest request) {
-        preProcessRequestByMessageMagicValue(request);
         int partition = request.getTranslatedPartition(logManager);
+        preProcessRequestByMessageMagicValue(request,partition);
         try {
             final ILog log = logManager.getOrCreateLog(request.topic, partition);
             log.append(request.messages);
@@ -103,27 +104,54 @@ public class ProducerHandler extends AbstractHandler {
      * process the messages in request before they are written to disk.
      * @param request
      */
-    private void preProcessRequestByMessageMagicValue(ProducerRequest request) {
+    private void preProcessRequestByMessageMagicValue(ProducerRequest request,int partition) {
         //get id of this broker
         int brokerId = Server.brokerId;
-        int partition = request.getTranslatedPartition(logManager);
         ByteBufferMessageSet messageSet = request.messages;
-        for(MessageAndOffset messageAndOffset:messageSet){
-           Message msg = messageAndOffset.message;
-           byte magic = msg.magic();
+        //recreate a new ByteBufferMessageSet
+        List<Message> msgLst = new ArrayList<Message>();
+        Iterator<MessageAndOffset> outerItr = messageSet.internalIterator(true);
+        while(outerItr.hasNext()){
+            MessageAndOffset messageAndOffset = outerItr.next();
+            Message msg = processMessage(messageAndOffset.message,brokerId,partition);
+            msgLst.add(msg);
+        }
+        request.messages = new ByteBufferMessageSet(toArray(msgLst));
+    }
+
+    private Message processMessage(Message msg,int brokerId,int partition) {
+        CompressionCodec codec = msg.compressionCodec();
+        if(codec == CompressionCodec.NoCompressionCodec){
+            byte magic = msg.magic();
             //change message by message version if it is necessary
             switch(magic){
                 case Message.MAGIC_VERSION2:
                 case Message.MAGIC_VERSION_WITH_ID:
-                    ByteBuffer buffer = ByteBuffer.allocate(Message.MAGIC_VERSION_WITH_ID_MAGIC_LENGTH * 8);
-                    buffer.putInt(brokerId);
                     long msgId = MessageIdCenter.generateId(partition);
-                    buffer.putLong(msgId);
-                    Message newMessage = new Message(brokerId,msgId,msg.payload().array());
-                    messageAndOffset.message = newMessage;
-                    break;
+                    ByteBuffer buffer = msg.payload();
+                    byte[] bytes = new byte[buffer.remaining()];
+                    buffer.get(bytes);
+                    return new Message(brokerId,msgId,bytes);
             }
+        }else{
+            //compress message
+            List<Message> msgLst = new ArrayList<Message>();
+            Iterator<MessageAndOffset> itr = CompressionUtils.decompress(msg).internalIterator(true);
+            while(itr.hasNext()){
+                Message tmpMsg = processMessage(itr.next().message,brokerId,partition);
+                msgLst.add(tmpMsg);
+            }
+            long msgId = MessageIdCenter.generateId(partition);
+            return CompressionUtils.compress(toArray(msgLst), codec, brokerId, msgId);
         }
+        return null;
+    }
 
+    private Message[] toArray(List<Message> msgLst) {
+        Message[] arr = new Message[msgLst.size()];
+        for(int i = 0;i < msgLst.size();i++){
+            arr[i] = msgLst.get(i);
+        }
+        return arr;
     }
 }

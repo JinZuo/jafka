@@ -20,7 +20,7 @@ public class MessageIdCenter {
          * @return
          */
     public static synchronized long generateId(int partitionId) {
-            if(partitionId == -1)
+            if(partitionId < 0)
                 return -1;
             long timestamp = System.currentTimeMillis();
             if(timestamp < lastTimestamp){

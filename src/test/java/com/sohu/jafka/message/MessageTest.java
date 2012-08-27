@@ -53,7 +53,7 @@ public class MessageTest {
      */
     @Test
     public void testPayloadOffset() {
-        assertEquals(6, Message.payloadOffset((byte)1));
+        assertEquals(10, Message.payloadOffset((byte)1));
     }
 
     /**
@@ -61,7 +61,7 @@ public class MessageTest {
      */
     @Test
     public void testHeaderSize() {
-        assertEquals(6, Message.headerSize((byte)1));
+        assertEquals(10, Message.headerSize((byte)1));
     }
 
    
@@ -162,27 +162,28 @@ public class MessageTest {
     }
 
     /**
-         * Test new message version with id
-         */
+    * Test new message version with id
+    */
     @Test
     public void testNewMessageVersion(){
         int partitionId = 3;
         long msgId = MessageIdCenter.generateId(partitionId);
         Message m =  new Message(Server.brokerId,msgId,"demo".getBytes());
-        int brokerId = m.brokerId();
-        assertEquals(Server.brokerId,brokerId);
-        MessageId messageId = m.getMessageId();
         if(Message.CurrentMagicValue >= Message.MAGIC_VERSION_WITH_ID){
+            int brokerId = m.brokerId();
+            assertEquals(Server.brokerId,brokerId);
+            MessageId messageId = m.getMessageId();
             assertEquals(partitionId,messageId.getPartitionId());
             assertEquals(0, messageId.getSequenceId());
             assertTrue(100 > (System.currentTimeMillis() - messageId.getTimestamp()));
         }
 
-
         m = new Message("demo".getBytes());
         assertEquals(-1,m.brokerId());
         assertEquals(-1L,m.messageId());
         assertEquals(null,m.getMessageId());
+        m = new Message(m.buffer);
+        assertEquals("demo",Utils.toString(m.payload(),"utf-8"));
     }
 
 

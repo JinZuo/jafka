@@ -33,6 +33,10 @@ import com.sohu.jafka.message.compress.CompressionFactory;
 public class CompressionUtils {
 
     public static Message compress(Message[] messages, CompressionCodec compressionCodec) {
+        return compress(messages,compressionCodec,-1,-1L);
+    }
+
+    public static Message compress(Message[] messages, CompressionCodec compressionCodec,int brokerId,long msgId) {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         CompressionCodec codec = compressionCodec;
         final CompressionFacade compressionFacade = CompressionFactory.create(//
@@ -52,7 +56,7 @@ public class CompressionUtils {
         } finally {
             compressionFacade.close();
         }
-        return new Message(outputStream.toByteArray(), compressionCodec);
+        return new Message(brokerId,msgId,outputStream.toByteArray(), compressionCodec);
     }
 
     public static ByteBufferMessageSet decompress(Message message) {

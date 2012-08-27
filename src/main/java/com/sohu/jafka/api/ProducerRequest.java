@@ -69,7 +69,9 @@ public class ProducerRequest implements Request {
     /**
      * request messages
      */
-    public final ByteBufferMessageSet messages;
+    //public final ByteBufferMessageSet messages;
+    //remove final because the messages may be changed in broker before they're stored.
+    public ByteBufferMessageSet messages;
 
     /**
      * topic partition

@@ -66,6 +66,7 @@ public class Server implements Closeable {
     public Server(ServerConfig config) {
         this.config = config;
         brokerId = config.getBrokerId();
+        logger.info("jafka server with id "+brokerId);
         logDir = new File(config.getLogDir());
         if (!logDir.exists()) {
             logDir.mkdirs();
