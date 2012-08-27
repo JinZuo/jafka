@@ -46,7 +46,7 @@ public class LogIndexTest extends BaseJafkaServer{
         procuer.close();
     }
 
-    private void consumerMessages(String topic) throws IOException {
+    private void consumeMessages(String topic) throws IOException {
         SimpleConsumer consumer = new SimpleConsumer("localhost",9092);
         FetchRequest req = new FetchRequest(topic,0,0,1000*1000);
         ByteBufferMessageSet messageSet = consumer.fetch(req);
