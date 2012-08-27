@@ -18,6 +18,7 @@
 package com.sohu.jafka.producer.serializer;
 
 import com.sohu.jafka.message.Message;
+import com.sohu.jafka.producer.ProducerPoolData;
 
 /**
  * {@link Message} en/decoder(nothing to do)
@@ -30,6 +31,11 @@ public class MessageEncoders implements Encoder<Message>, Decoder<Message> {
 
     @Override
     public Message toMessage(Message event) {
+        return event;
+    }
+
+    @Override
+    public Message toMessage(Message event, ProducerPoolData<Message> data) {
         return event;
     }
 

@@ -73,7 +73,7 @@ public class Message implements ICalculable {
     /* message id in MAGIC_VERSION_WITH_ID*/
     public static final byte MESSAGE_ID_OFFSET = BROKER_ID_OFFSET + BROKER_ID_LENGTH;
     public static final byte MESSAGE_ID_LENGTH = 8;
-
+    public static final int MAGIC_VERSION_WITH_ID_MAGIC_LENGTH = BROKER_ID_LENGTH + MESSAGE_ID_LENGTH;
     /**
      * Specifies the mask for the compression code. 2 bits to hold the
      * compression codec. 0 is reserved to indicate no compression
@@ -81,6 +81,7 @@ public class Message implements ICalculable {
     public static final int CompressionCodeMask = 0x03; //
 
     public static final int NoCompression = 0;
+
 
     /**
      * Computes the CRC value based on the magic byte
@@ -154,51 +155,21 @@ public class Message implements ICalculable {
         }
         buffer.put(attributes);
 
-        buffer.put(magicContentBytes);
+        if(magicContentBytes != null && magicContentBytes.length > 0)
+            buffer.put(magicContentBytes);
 
         Utils.putUnsignedInt(buffer,checksum);
         buffer.put(msgContentBytes);
         buffer.rewind();
     }
 
-    /**
-     * add magic as a parameter
-     * @param magic
-     * @param checksum
-     * @param bytes
-     * @param compressionCodec
-     */
-     public Message(byte magic,int brokerId,long msgId, long checksum, byte[] bytes, CompressionCodec compressionCodec) {
-          this(ByteBuffer.allocate(Message.headerSize(magic)+bytes.length));
-          buffer.put(magic);
-          byte attributes = 0;
-          if(compressionCodec.codec > 0){
-              attributes = (byte)(attributes | (CompressionCodeMask & compressionCodec.codec));
-          }
-          buffer.put(attributes);
-
-          //new message version,with broker id and message id. Though this is not a good way to add a new message version here, message version does not often change.
-          //todo: find a better method to add a new message version
-          if(magic == MAGIC_VERSION_WITH_ID){
-            buffer.putInt(brokerId);
-            buffer.putLong(msgId);
-          }
-
-          Utils.putUnsignedInt(buffer,checksum);
-          buffer.put(bytes);
-          buffer.rewind();
-     }
-
     public Message(long checksum, byte[] bytes, CompressionCodec compressionCodec) {
-        this(CurrentMagicValue,-1,-1L,checksum,bytes,compressionCodec);
+        this(MAGIC_VERSION2,null,checksum,bytes,compressionCodec);
     }
 
-    public Message(byte magic,int brokerId,long msgId,long checksum, byte[] bytes) {
-        this(magic,brokerId,msgId,checksum, bytes, CompressionCodec.NoCompressionCodec);
-    }
 
-    public Message(byte magic,int brokerId,long msgId,byte[] bytes, CompressionCodec compressionCodec) {
-        this(magic,brokerId,msgId,Utils.crc32(bytes), bytes, compressionCodec);
+    public Message(byte magic,byte[] magicBytes,byte[] bytes, CompressionCodec compressionCodec) {
+        this(magic,magicBytes,Utils.crc32(bytes), bytes, compressionCodec);
     }
     public Message(long checksum, byte[] bytes) {
         this(checksum, bytes, CompressionCodec.NoCompressionCodec);
@@ -218,8 +189,8 @@ public class Message implements ICalculable {
         this(bytes, CompressionCodec.NoCompressionCodec);
     }
 
-    public Message(byte magic,int brokerId,long msgId,byte[] bytes) {
-        this(magic,brokerId,msgId,bytes, CompressionCodec.NoCompressionCodec);
+    public Message(byte magic,byte[] magicBytes,byte[] bytes) {
+        this(magic,magicBytes,bytes, CompressionCodec.NoCompressionCodec);
     }
 
     //

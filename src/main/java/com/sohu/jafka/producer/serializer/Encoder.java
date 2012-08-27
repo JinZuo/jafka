@@ -18,6 +18,7 @@
 package com.sohu.jafka.producer.serializer;
 
 import com.sohu.jafka.message.Message;
+import com.sohu.jafka.producer.ProducerPoolData;
 
 /**
  * convert Object&lt;T&gt; to message
@@ -30,5 +31,22 @@ import com.sohu.jafka.message.Message;
 public interface Encoder<T> {
 
     //todo:alfred: message should declare its version
+
+    /**
+     * we need more information for various message versions.
+     * To use toMessage(T event,ProducerPoolData data)
+     * @param event
+     * @return
+     */
+    @Deprecated
     Message toMessage(T event);
+
+    /**
+     * There are message version, message content information in data.
+     * try to use data.toMessage method to construct a Message
+     * @param data
+     * @return
+     */
+    Message toMessage(T event,ProducerPoolData<T> data);
+
 }

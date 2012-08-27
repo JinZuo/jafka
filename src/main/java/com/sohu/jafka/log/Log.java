@@ -292,6 +292,7 @@ public class Log implements ILog {
         synchronized (lock) {
             try {
                 LogSegment lastSegment = segments.getLastView();
+                //written bytes and the total file size after written
                 long[] writtenAndOffset = lastSegment.getMessageSet().append(validMessages);
                 if (logger.isTraceEnabled()) {
                     logger.trace(String.format("[%s,%s] save %d messages, bytes %d", name, lastSegment.getName(),

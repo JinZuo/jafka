@@ -20,6 +20,7 @@ package com.sohu.jafka.producer.serializer;
 import java.nio.ByteBuffer;
 
 import com.sohu.jafka.message.Message;
+import com.sohu.jafka.producer.ProducerPoolData;
 
 /**
  * a bytes en/decoder
@@ -32,6 +33,11 @@ public class ByteArrayEncoders implements Encoder<byte[]>, Decoder<byte[]> {
     @Override
     public Message toMessage(byte[] event) {
         return new Message(event);
+    }
+
+    @Override
+    public Message toMessage(byte[] event, ProducerPoolData<byte[]> data) {
+        return data.toMessage(event);
     }
 
     @Override

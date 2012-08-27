@@ -29,6 +29,7 @@ import java.util.Random;
 import java.util.SortedSet;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import com.sohu.jafka.message.Message;
 import org.apache.log4j.Logger;
 
 import com.sohu.jafka.api.ProducerRequest;
@@ -165,22 +166,28 @@ public class Producer<K, V> implements Callback,IProducer<K, V> {
         return encoder == null ?(Encoder<V>) Utils.getObject(config.getSerializerClass()):encoder;
     }
 
+    @Override
     public void send(ProducerData<K, V> data) throws NoBrokersForPartitionException, InvalidPartitionException {
+        send(data, Message.MAGIC_VERSION2);
+    }
+
+    @Override
+    public void send(ProducerData<K, V> data,byte magic) throws NoBrokersForPartitionException, InvalidPartitionException {
         if (data == null) return;
         if (zkEnabled) {
-            zkSend(data);
+            zkSend(data,magic);
         } else {
-            configSend(data);
+            configSend(data,magic);
         }
     }
 
   
-    private void configSend(ProducerData<K, V> data) {
-        producerPool.send(create(data));
+    private void configSend(ProducerData<K, V> data, byte magic) {
+        producerPool.send(create(data,magic));
     }
 
     
-    private void zkSend(ProducerData<K, V> data) {
+    private void zkSend(ProducerData<K, V> data, byte magic) {
         int numRetries = 0;
         Broker brokerInfoOpt = null;
         Partition brokerIdPartition = null;
@@ -203,7 +210,7 @@ public class Producer<K, V> implements Callback,IProducer<K, V> {
         //
         ProducerPoolData<V> ppd = producerPool.getProducerPoolData(data.getTopic(),//
                 new Partition(brokerIdPartition.brokerId, brokerIdPartition.partId),//
-                data.getData());
+                data.getData(),magic);
         producerPool.send(ppd);
     }
 
@@ -227,13 +234,13 @@ public class Producer<K, V> implements Callback,IProducer<K, V> {
         }
     }
 
-    private ProducerPoolData<V> create(ProducerData<K, V> pd) {
+    private ProducerPoolData<V> create(ProducerData<K, V> pd, byte magic) {
         Collection<Partition> topicPartitionsList = getPartitionListForTopic(pd);
         //FIXME: random Broker???
         int randomBrokerId = random.nextInt(topicPartitionsList.size());
         final Partition brokerIdPartition = new ArrayList<Partition>(topicPartitionsList).get(randomBrokerId);
         return this.producerPool.getProducerPoolData(pd.getTopic(),//
-                new Partition(brokerIdPartition.brokerId, ProducerRequest.RandomPartition), pd.getData());
+                new Partition(brokerIdPartition.brokerId, ProducerRequest.RandomPartition), pd.getData(),magic);
     }
 
     private Collection<Partition> getPartitionListForTopic(ProducerData<K, V> pd) {

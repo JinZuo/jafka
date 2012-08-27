@@ -151,7 +151,7 @@ public class ProducerPool<V> implements Closeable {
             Message[] messages = new Message[ppd.data.size()];
             int index = 0;
                 for (V v : ppd.data) {
-                    messages[index] = serializer.toMessage(v);
+                    messages[index] = serializer.toMessage(v,ppd);
                     index++;
                 }
             ByteBufferMessageSet bbms = new ByteBufferMessageSet(config.getCompressionCodec(), messages);
@@ -245,5 +245,9 @@ public class ProducerPool<V> implements Closeable {
      */
     public ProducerPoolData<V> getProducerPoolData(String topic, Partition bidPid, List<V> data) {
         return new ProducerPoolData<V>(topic, bidPid, data);
+    }
+
+    public ProducerPoolData<V> getProducerPoolData(String topic, Partition partition, List<V> data, byte magic) {
+        return new ProducerPoolData<V>(topic,partition,data,magic);
     }
 }
