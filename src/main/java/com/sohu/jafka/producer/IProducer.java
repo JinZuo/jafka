@@ -39,8 +39,6 @@ public interface IProducer<K, V> extends Closeable {
      * @throws InvalidPartitionException partition is out of range
      */
     void send(ProducerData<K, V> data) throws NoBrokersForPartitionException, InvalidPartitionException;
-    void send(ProducerData<K, V> data,byte magic) throws NoBrokersForPartitionException, InvalidPartitionException;
-
 
     /**
      * get message encoder

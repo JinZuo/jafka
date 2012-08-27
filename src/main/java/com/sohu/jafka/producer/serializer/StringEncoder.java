@@ -18,7 +18,6 @@
 package com.sohu.jafka.producer.serializer;
 
 import com.sohu.jafka.message.Message;
-import com.sohu.jafka.producer.ProducerPoolData;
 import com.sohu.jafka.utils.Utils;
 
 /**
@@ -33,11 +32,5 @@ public class StringEncoder implements Encoder<String> {
     public Message toMessage(String event) {
         return new Message(Utils.getBytes(event, "UTF-8"));
     }
-
-    @Override
-    public Message toMessage(String event, ProducerPoolData<String> data) {
-        return data.toMessage(Utils.getBytes(event,"UTF-8"));
-    }
-
 
 }
