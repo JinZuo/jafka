@@ -288,4 +288,8 @@ public class FileMessageSet extends MessageSet {
         return setHighWaterMark.get();
     }
 
+    public boolean isMutable(){
+        return this.mutable;
+    }
+
 }

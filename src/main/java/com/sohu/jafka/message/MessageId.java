@@ -19,11 +19,13 @@ public class MessageId {
     public static final long TIMESTAMP_MASK = 0x3ffffffffffL;
     public static final int TIMESTAMP_SHIFT = PARTITIONID_SHIFT + PARTITIONID_BITS;
 
+    private long messageId;
     private long timestamp;
     private int partitionId;
     private int sequenceId;
 
     public MessageId(long id){
+        messageId = id;
         sequenceId = (int)(id & SEQUENCE_MASK);
         partitionId = (int)((id >>> PARTITIONID_SHIFT) & PARTITIONID_MASK);
         timestamp = (id >>> TIMESTAMP_SHIFT) & TIMESTAMP_MASK;
@@ -51,6 +53,10 @@ public class MessageId {
 
     public void setTimestamp(long timestamp) {
         this.timestamp = timestamp;
+    }
+
+    public long getMessageId() {
+        return messageId;
     }
 
     @Override

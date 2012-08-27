@@ -24,6 +24,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.sohu.jafka.log.LogManager;
 import org.apache.log4j.Logger;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
 
@@ -31,7 +32,6 @@ import com.github.zkclient.IZkStateListener;
 import com.github.zkclient.ZkClient;
 import com.github.zkclient.exception.ZkNodeExistsException;
 import com.sohu.jafka.cluster.Broker;
-import com.sohu.jafka.log.LogManager;
 import com.sohu.jafka.server.TopicTask.TaskType;
 import com.sohu.jafka.utils.zookeeper.ZKStringSerializer;
 import com.sohu.jafka.utils.zookeeper.ZkUtils;

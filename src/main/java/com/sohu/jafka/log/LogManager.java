@@ -32,6 +32,7 @@ import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import com.sohu.jafka.log.index.LogIndexSegment;
 import org.apache.log4j.Logger;
 
 import com.sohu.jafka.api.OffsetRequest;
@@ -110,7 +111,7 @@ public class LogManager implements PartitionChooser, Closeable {
         super();
         this.config = config;
         this.scheduler = scheduler;
-        //        this.time = time;
+        //this.time = time;
         this.logCleanupIntervalMs = logCleanupIntervalMs;
         this.logCleanupDefaultAgeMs = logCleanupDefaultAgeMs;
         this.needRecovery = needRecovery;
@@ -159,7 +160,7 @@ public class LogManager implements PartitionChooser, Closeable {
 
                     logs.putIfNotExists(topic, new Pool<Integer, Log>());
                     Pool<Integer, Log> parts = logs.get(topic);
-                    
+
                     parts.put(partition, log);
                     int configPartition = getPartition(topic);
                     if(configPartition <= partition) {
@@ -251,6 +252,7 @@ public class LogManager implements PartitionChooser, Closeable {
         long startMs = System.currentTimeMillis();
         while (iter.hasNext()) {
             Log log = iter.next();
+            //todo:alfred:clean up runs
             total += cleanupExpiredSegments(log) + cleanupSegmentsToMaintainSize(log);
         }
         if (total > 0) {
@@ -303,6 +305,25 @@ public class LogManager implements PartitionChooser, Closeable {
      * Attemps to delete all provided segments from a log and returns how many it was able to
      */
     private int deleteSegments(Log log, List<LogSegment> segments) {
+         //todo:alfred:将该log中的idxSegment进行一下trunc，方法为trunc(segments),
+        //如果segements和idxSegments的个数相同，那么可以直接trunc(count),否则，trunc文件名相同的
+        //todo:alfred:trunc index segments too. find when `delete` is called
+        //todo:alfred:idxSegments 的删除要自己完成，因为它的长度可能与segments不同，不能trunc count
+        //tod:alfred:或者遍历返回的要删除的segments，然后进行trunc，这是比较可行的
+        //trunc完就可以删除了
+        List<LogIndexSegment> idxSegmentLst = null;
+        if(log.canIdxTruncDirectly()){
+            idxSegmentLst = log.getIdxSegments().trunc(segments.size());
+        }else{
+            idxSegmentLst = log.getIdxSegments().trunc(segments);
+        }
+
+        //todo:alfred:先删索引，再删数据，即便删数据失败了也不会导致崩溃
+        for(LogIndexSegment idxSegment:idxSegmentLst){
+            //add fail check code
+            idxSegment.getIdxFile().delete();
+        }
+
         int total = 0;
         for (LogSegment segment : segments) {
             boolean deleted = false;
@@ -312,6 +333,8 @@ public class LogManager implements PartitionChooser, Closeable {
                 } catch (IOException e) {
                     logger.warn(e.getMessage(), e);
                 }
+                //todo:alfred:change delete method to delete index files at the same time
+                //todo:alfred:这段代码逻辑貌似有问题？！deleted的标注
                 if (!segment.getFile().delete()) {
                     deleted = true;
                 } else {

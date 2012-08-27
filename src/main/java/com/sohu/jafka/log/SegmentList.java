@@ -63,6 +63,7 @@ public class SegmentList {
      * 
      * @param newStart the logsegment who's index smaller than newStart will be deleted.
      * @return the deleted segment
+     * todo:alfred:add trunc indexList code,trunc data from indexSegmentlist
      */
     public List<LogSegment> trunc(int newStart) {
         if (newStart < 0) {
@@ -96,6 +97,10 @@ public class SegmentList {
      */
     public List<LogSegment> getView() {
         return contents.get();
+    }
+
+    public int size(){
+        return contents.get().size();
     }
 
     @Override

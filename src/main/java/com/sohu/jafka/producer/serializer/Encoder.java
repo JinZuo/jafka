@@ -29,5 +29,6 @@ import com.sohu.jafka.message.Message;
  */
 public interface Encoder<T> {
 
+    //todo:alfred: message should declare its version
     Message toMessage(T event);
 }

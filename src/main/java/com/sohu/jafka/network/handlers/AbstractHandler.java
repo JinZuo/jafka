@@ -17,9 +17,9 @@
 
 package com.sohu.jafka.network.handlers;
 
+import com.sohu.jafka.log.LogManager;
 import org.apache.log4j.Logger;
 
-import com.sohu.jafka.log.LogManager;
 import com.sohu.jafka.network.RequestHandler;
 
 /**

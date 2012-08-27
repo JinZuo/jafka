@@ -21,6 +21,7 @@ import static org.junit.Assert.*;
 
 import java.nio.ByteBuffer;
 
+import com.sohu.jafka.server.Server;
 import org.junit.Test;
 
 import com.sohu.jafka.common.UnknownMagicByteException;
@@ -167,7 +168,7 @@ public class MessageTest {
     public void testNewMessageVersion(){
         Message m =  new Message(Message.MAGIC_VERSION_WITH_ID,"demo".getBytes(),2);
         int brokerId = m.brokerId();
-        assertEquals(-1,brokerId);
+        assertEquals(Server.brokerId,brokerId);
         MessageId msgId = m.getMessageId();
         assertEquals(2,msgId.getPartitionId());
         System.out.println(msgId);

@@ -22,9 +22,9 @@ import java.io.File;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import com.sohu.jafka.log.LogManager;
 import org.apache.log4j.Logger;
 
-import com.sohu.jafka.log.LogManager;
 import com.sohu.jafka.mx.ServerInfo;
 import com.sohu.jafka.mx.SocketServerStats;
 import com.sohu.jafka.network.SocketServer;

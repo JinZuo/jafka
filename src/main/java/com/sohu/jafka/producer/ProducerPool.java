@@ -150,10 +150,10 @@ public class ProducerPool<V> implements Closeable {
         if (sync) {
             Message[] messages = new Message[ppd.data.size()];
             int index = 0;
-            for (V v : ppd.data) {
-                messages[index] = serializer.toMessage(v);
-                index++;
-            }
+                for (V v : ppd.data) {
+                    messages[index] = serializer.toMessage(v);
+                    index++;
+                }
             ByteBufferMessageSet bbms = new ByteBufferMessageSet(config.getCompressionCodec(), messages);
             ProducerRequest request = new ProducerRequest(ppd.topic, ppd.partition.partId, bbms);
             SyncProducer producer = syncProducers.get(ppd.partition.brokerId);

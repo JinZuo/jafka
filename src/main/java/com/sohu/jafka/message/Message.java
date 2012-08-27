@@ -81,6 +81,7 @@ public class Message implements ICalculable {
     public static final int CompressionCodeMask = 0x03; //
 
     public static final int NoCompression = 0;
+    private byte version;
 
     /**
      * Computes the CRC value based on the magic byte
@@ -143,8 +144,9 @@ public class Message implements ICalculable {
      * @param bytes
      * @param compressionCodec
      */
-     public Message(byte magic, long checksum, byte[] bytes, CompressionCodec compressionCodec,int partitionId) {
+     public Message(byte magic,int brokerId,long msgId, long checksum, byte[] bytes, CompressionCodec compressionCodec) {
           this(ByteBuffer.allocate(Message.headerSize(magic)+bytes.length));
+         this.version = magic;
           buffer.put(magic);
           byte attributes = 0;
           if(compressionCodec.codec > 0){
@@ -156,27 +158,24 @@ public class Message implements ICalculable {
           //todo: find a better method to add a new message version
           if(magic == MAGIC_VERSION_WITH_ID){
             buffer.putInt(Server.brokerId);
-            if(partitionId == -1){
-                throw new IllegalArgumentException("PartitionId could not be -1 !");
-            }
-            buffer.putLong(MessageIdCenter.generateId(partitionId));
+            buffer.putLong(msgId);
           }
-          
+
           Utils.putUnsignedInt(buffer,checksum);
           buffer.put(bytes);
           buffer.rewind();
      }
 
     public Message(long checksum, byte[] bytes, CompressionCodec compressionCodec) {
-        this(CurrentMagicValue,checksum,bytes,compressionCodec,-1);
+        this(CurrentMagicValue,-1,-1L,checksum,bytes,compressionCodec);
     }
 
-    public Message(byte magic,long checksum, byte[] bytes, int partitionId) {
-        this(magic,checksum, bytes, CompressionCodec.NoCompressionCodec,partitionId);
+    public Message(byte magic,int brokerId,long msgId,long checksum, byte[] bytes) {
+        this(magic,brokerId,msgId,checksum, bytes, CompressionCodec.NoCompressionCodec);
     }
 
-    public Message(byte magic,byte[] bytes, CompressionCodec compressionCodec, int partitionId) {
-        this(magic,Utils.crc32(bytes), bytes, compressionCodec,partitionId);
+    public Message(byte magic,int brokerId,long msgId,byte[] bytes, CompressionCodec compressionCodec) {
+        this(magic,brokerId,msgId,Utils.crc32(bytes), bytes, compressionCodec);
     }
     public Message(long checksum, byte[] bytes) {
         this(checksum, bytes, CompressionCodec.NoCompressionCodec);
@@ -196,8 +195,8 @@ public class Message implements ICalculable {
         this(bytes, CompressionCodec.NoCompressionCodec);
     }
 
-    public Message(byte magic,byte[] bytes,int partitionId) {
-        this(magic,bytes, CompressionCodec.NoCompressionCodec, partitionId);
+    public Message(byte magic,int brokerId,long msgId,byte[] bytes) {
+        this(magic,brokerId,msgId,bytes, CompressionCodec.NoCompressionCodec);
     }
 
     //
@@ -228,10 +227,16 @@ public class Message implements ICalculable {
     }
 
     public long messageId(){
+        if(this.version != MAGIC_VERSION_WITH_ID){
+            return -1;
+        }
         return buffer.getLong(MESSAGE_ID_OFFSET);
     }
 
     public MessageId getMessageId(){
+        if(this.version != MAGIC_VERSION_WITH_ID){
+            return null;
+        }
         return new MessageId(messageId());
     }
 
@@ -300,4 +305,5 @@ public class Message implements ICalculable {
     public int hashCode() {
         return buffer.hashCode();
     }
+
 }

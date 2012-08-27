@@ -36,6 +36,11 @@ public abstract class BaseJafkaServer {
     }
 
     public Jafka createJafka(Properties mainProperties) {
+        return createJafka(mainProperties,true);
+    }
+
+
+    public Jafka createJafka(Properties mainProperties,boolean delLogDir) {
         Jafka jafka = new Jafka();
         if (!mainProperties.containsKey("brokerid")) {
             mainProperties.setProperty("brokerid", "0");
@@ -43,10 +48,13 @@ public abstract class BaseJafkaServer {
         if (!mainProperties.containsKey("log.dir")) {
             mainProperties.setProperty("log.dir", DataLogCleaner.defaultDataLogPath);
         }
-        DataLogCleaner.cleanDataLogDir(new File(mainProperties.getProperty("log.dir")));
+        if(delLogDir){
+            DataLogCleaner.cleanDataLogDir(new File(mainProperties.getProperty("log.dir")));
+        }
         jafka.start(mainProperties, null, null);
         return jafka;
     }
+
 
     public void flush(Jafka jafka) {
         jafka.flush();
