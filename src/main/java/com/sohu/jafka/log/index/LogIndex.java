@@ -9,24 +9,32 @@ import com.sohu.jafka.message.MessageId;
 public class LogIndex {
 
     //the message id
-    private MessageId messageId;
+    private long msgId;
     //the offset of the message in the corresponding jafka file
     private long offset;
 
-
-    public MessageId getMessageId() {
-        return messageId;
+    public LogIndex(long msgId,long offset){
+        this.msgId = msgId;
+        this.offset = offset;
     }
 
-    public void setMessageId(MessageId messageId) {
-        this.messageId = messageId;
+    public MessageId getMessageId() {
+        return new MessageId(msgId);
     }
 
     public long getOffset() {
         return offset;
     }
 
-    public void setOffset(long offset) {
-        this.offset = offset;
+    public long getMessageIdLongValue(){
+        return msgId;
+    }
+
+    @Override
+    public String toString() {
+        return "LogIndex{" +
+                "msgId=" + msgId +
+                ", offset=" + offset +
+                '}';
     }
 }

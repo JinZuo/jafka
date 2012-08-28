@@ -58,7 +58,7 @@ public class MessageId {
         this.timestamp = timestamp;
     }
 
-    public long getMessageId() {
+    public long getLongValue() {
         return messageId;
     }
 
