@@ -33,6 +33,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import com.sohu.jafka.log.index.LogIndexSegment;
+import com.sohu.jafka.server.Server;
 import org.apache.log4j.Logger;
 
 import com.sohu.jafka.api.OffsetRequest;
@@ -102,6 +103,7 @@ public class LogManager implements PartitionChooser, Closeable {
     private final Map<String, Integer> topicPartitionsMap;
 
     private RollingStrategy rollingStategy;
+
 
     public LogManager(ServerConfig config, //
             Scheduler scheduler, //
@@ -312,17 +314,18 @@ public class LogManager implements PartitionChooser, Closeable {
         //tod:alfred:或者遍历返回的要删除的segments，然后进行trunc，这是比较可行的
         //trunc完就可以删除了
         List<LogIndexSegment> idxSegmentLst = null;
+        //the index quantity may differ from the log segment quantity
         if(log.canIdxTruncDirectly()){
             idxSegmentLst = log.getIdxSegments().trunc(segments.size());
         }else{
             idxSegmentLst = log.getIdxSegments().trunc(segments);
         }
 
-        //todo:alfred:先删索引，再删数据，即便删数据失败了也不会导致崩溃
-        for(LogIndexSegment idxSegment:idxSegmentLst){
-            //add fail check code
-            idxSegment.getIdxFile().delete();
-        }
+         //todo:alfred:先删索引，再删数据，即便删数据失败了也不会导致崩溃
+         for(LogIndexSegment idxSegment:idxSegmentLst){
+             //add fail check code
+             idxSegment.getIdxFile().delete();
+         }
 
         int total = 0;
         for (LogSegment segment : segments) {

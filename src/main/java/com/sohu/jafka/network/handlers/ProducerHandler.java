@@ -134,6 +134,7 @@ public class ProducerHandler extends AbstractHandler {
                     return new Message(brokerId,msgId,bytes);
             }
         }else{
+            logger.info("use compression codec!");
             //compress message
             List<Message> msgLst = new ArrayList<Message>();
             Iterator<MessageAndOffset> itr = CompressionUtils.decompress(msg).internalIterator(true);

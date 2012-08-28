@@ -33,12 +33,18 @@ public class LogIndexSegment {
     //the index file,which contains message index
     private File idxFile;
     private FileChannel channel;
-
+    private LogSegment logSegment;
     private boolean mutable;
 
-    public LogIndexSegment(File file,FileChannel channel){
+    public LogIndexSegment(File file, FileChannel channel, LogSegment logSegment, boolean needRecovery){
         this.idxFile = file;
         this.channel = channel;
+        this.logSegment = logSegment;
+
+        if(needRecovery){
+            recover();
+        }
+
         try {
             this.size = channel.size();
         } catch (IOException e) {

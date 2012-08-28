@@ -204,4 +204,8 @@ public class ServerConfig extends ZKConfig {
     public Authentication getAuthentication() {
         return authentication;
     }
+
+    public boolean getEnableIndex() {
+        return getBoolean(props,"enable.index",true);
+    }
 }

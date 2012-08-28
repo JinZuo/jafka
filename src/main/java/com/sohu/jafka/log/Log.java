@@ -34,6 +34,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import com.sohu.jafka.log.index.IndexSegmentList;
 import com.sohu.jafka.log.index.LogIndexSegment;
+import com.sohu.jafka.server.Server;
 import org.apache.log4j.Logger;
 
 import com.sohu.jafka.api.OffsetRequest;
@@ -83,7 +84,7 @@ public class Log implements ILog {
 
     private final SegmentList segments;
     //todo:alfred:add IndexSegmentList
-    private final IndexSegmentList idxSegments;
+    private  IndexSegmentList idxSegments;
 
 
     public final int partition;
@@ -157,33 +158,33 @@ public class Log implements ILog {
         List<LogIndexSegment> idxSegmentList = new ArrayList<LogIndexSegment>();
 
         for(LogSegment logSegment:segmentsList){
-            String fileName = logSegment.getFile().getAbsolutePath();
-            fileName += LogIndexSegment.FILE_SUFFIX;
-            File file = new File(fileName);
+            String idxFilePath = logSegment.getFile().getAbsolutePath();
+            idxFilePath += LogIndexSegment.FILE_SUFFIX;
+            File file = new File(idxFilePath);
             if(!file.exists()){
-                logger.warn("Loading index file ["+fileName+"] failed => not exists!");
+                logger.warn("Loading index file ["+idxFilePath+"] failed => not exists!");
                 if(logSegment.isMutable()){
-                    //todo:alfred:create a new jafka file with index file
+                    //If the last log segment file still have no index file, create a new jafka file with index file
                     if(logSegment.size() != 0){
                         roll();
-                        fileName = segments.getLastView().getFile().getAbsolutePath()+LogIndexSegment.FILE_SUFFIX;
+                        idxFilePath = segments.getLastView().getFile().getAbsolutePath()+LogIndexSegment.FILE_SUFFIX;
                     }
                     //create the index file and break the loop
-                    file = new File(fileName);
+                    file = new File(idxFilePath);
                     if(file.exists())
                         file.delete();
                     file.createNewFile();
                     FileChannel channel = new RandomAccessFile(file,"rw").getChannel();
-                    LogIndexSegment idxSeg = new LogIndexSegment(file,channel);
+                    LogIndexSegment idxSeg = new LogIndexSegment(file,channel,logSegment,needRecovery);
                     idxSegmentList.add(idxSeg);
-                    logger.info("Because message id feature has been enabled, create a new jafka and idx file for the new messages!");
+                    logger.info("index feature has been enabled -> create a new jafka and idx file for the new messages!");
                     break;
                 }
                 continue;
             }else{
-                logger.info("Loading index file ["+fileName+"] succeed!");
+                logger.info("Loading index file ["+idxFilePath+"] succeed!");
                 FileChannel channel = logSegment.isMutable()?new RandomAccessFile(file,"rw").getChannel():new FileInputStream(file).getChannel();
-                LogIndexSegment idxSeg = new LogIndexSegment(file,channel);
+                LogIndexSegment idxSeg = new LogIndexSegment(file,channel,logSegment,needRecovery);
                 idxSegmentList.add(idxSeg);
             }
         }

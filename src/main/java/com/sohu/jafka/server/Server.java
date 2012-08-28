@@ -62,10 +62,14 @@ public class Server implements Closeable {
     
     //expose broker id to Message
     public static int brokerId = -1;
+    //enable index feture or not. expose it to all the server class
+    public static boolean enableIndex;
+
     //
     public Server(ServerConfig config) {
         this.config = config;
         brokerId = config.getBrokerId();
+        enableIndex = config.getEnableIndex();
         logger.info("jafka server with id "+brokerId);
         logDir = new File(config.getLogDir());
         if (!logDir.exists()) {

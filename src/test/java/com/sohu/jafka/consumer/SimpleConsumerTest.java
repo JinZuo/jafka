@@ -91,6 +91,7 @@ public class SimpleConsumerTest extends BaseJafkaServer {
         Properties producerConfig = new Properties();
         producerConfig.setProperty("broker.list", "0:localhost:" + jafkaPort);
         producerConfig.setProperty("serializer.class", StringEncoder.class.getName());
+        producerConfig.setProperty("compression.codec","1");
         Producer<String, String> producer = new Producer<String, String>(new ProducerConfig(producerConfig));
         int index = 0;
         boolean over = false;
