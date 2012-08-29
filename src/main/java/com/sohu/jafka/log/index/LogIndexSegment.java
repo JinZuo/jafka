@@ -1,10 +1,8 @@
 package com.sohu.jafka.log.index;
 
 import com.sohu.jafka.log.LogSegment;
-import com.sohu.jafka.message.ByteBufferMessageSet;
-import com.sohu.jafka.message.Message;
-import com.sohu.jafka.message.MessageId;
-import com.sohu.jafka.message.MessageSet;
+import com.sohu.jafka.message.*;
+import com.sohu.jafka.utils.Utils;
 import org.apache.log4j.Logger;
 
 import java.io.File;
@@ -139,74 +137,59 @@ public class LogIndexSegment {
 
 
     /**
-     * get the first message offset bigger than time
+     * get the first message offset equal or bigger than time
      * @param time
      * @return
      */
+    //todo:alfred:getIndexNum会不会受到多线程的影响？有人写有人查的时候？copyonwrite
     public long getOffsetByTime(long time) throws IOException {
-        //no index message
-        if(indexNum <= 0)
+        if(getIndexNum() == 0)
             return -1;
+        int partitionId = new MessageId(startMsgId).getPartitionId();
+        long expectedMsgId = MessageIdCenter.generateId(time,partitionId , 0);
+        LogIndex expectedIdx = getLogIndexByMsgId(expectedMsgId);
+        if(expectedIdx == null){
+            return -1;
+        }
+        return expectedIdx.getOffset();
+    }
 
-
-        LogIndex idx = null;
-        int idxNum = -1;
-
+    private LogIndex getLogIndexByMsgId(long expectedMsgId) throws IOException {
+        if(getIndexNum() == 0)
+            return null;
+        if(expectedMsgId <= startMsgId){
+            return getLogIndexAt(1);
+        }
         int low = 1;
-        int high = indexNum;
-        int mid ;
-
-        idx = getLogIndexAt(low);
-        if(time <= idx.getMessageId().getTimestamp()){
-            return idx.getOffset();
-        }
-        idx = getLogIndexAt(high);
-        if(time > idx.getMessageId().getTimestamp()){
-            return -1;
-        }
+        int high = getIndexNum();
+        int mid;
 
         while(low <= high){
-            mid = (low+high)/2;
-            if(mid < 1)
-                throw new IllegalStateException("error");
+            mid = (low + high)/2;
             LogIndex leftIdx = getLogIndexAt(mid);
-            long leftTime = leftIdx.getMessageId().getTimestamp();
-            if(leftTime == time){
-                idx = leftIdx;
-                idxNum = mid;
-                logger.debug("choose the left equal one time is "+idx.getMessageId().getTimestamp()+";seqid is "+idx.getMessageId().getSequenceId());
-                break;
+            if(leftIdx.getMessageIdLongValue() == expectedMsgId){
+                return leftIdx;
             }
-            if((mid + 1) > indexNum)
-                throw new IllegalStateException("error");
+            if((mid + 1) > getIndexNum()){
+                logger.error("mid +1 >high!");
+                return null;
+            }
+
             LogIndex rightIdx = getLogIndexAt(mid + 1);
-            long rightTime = rightIdx.getMessageId().getTimestamp();
-            if(leftTime < time && time <= rightTime){
-                idx = rightIdx;
-                idxNum = mid + 1;
-                logger.debug("choose the right one,time is "+idx.getMessageId().getTimestamp()+";seqid is "+idx.getMessageId().getSequenceId());
-                break;
+            if(leftIdx.getMessageIdLongValue() < expectedMsgId && expectedMsgId <= rightIdx.getMessageIdLongValue()){
+                return rightIdx;
             }
-            if(leftTime > time){
+
+            if(leftIdx.getMessageIdLongValue() > expectedMsgId){
                 high = mid - 1;
-            }else{
+            }else if(rightIdx.getMessageIdLongValue() < expectedMsgId){
                 low = mid + 1;
             }
         }
-
-        if(idx != null){
-          int seqId = idx.getMessageId().getSequenceId();
-          //get the first index message in this millisecond
-          if(seqId > 0){
-             logger.debug(String.format("fetch the first msg in this time!indexNum[%d],seqNum[%d],time[%d]",idxNum,seqId,idx.getMessageId().getTimestamp()));
-             idxNum -= seqId;
-             idx = getLogIndexAt(idxNum<=0?1:idxNum);
-          }
-          return idx.getOffset();
-        }
-
-        return -1;
+        logger.warn("not found!");
+        return null;
     }
+
 
     /**
      * just for test

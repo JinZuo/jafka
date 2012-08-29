@@ -45,6 +45,11 @@ public class MessageIdCenter {
                     sequenceNum;
     }
 
+    public static long generateId(long time, int partition, int seq) {
+        return time << TIMESTAMP_SHIFT|
+                partition << PARTITIONID_SHIFT|
+                seq << SEQUENCE_SHIFT;
+    }
     private static long getNextMilli() {
         if(logger.isDebugEnabled()){
             logger.debug("wait until next millisecond comes!");
