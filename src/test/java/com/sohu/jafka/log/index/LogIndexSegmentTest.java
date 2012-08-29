@@ -1,9 +1,12 @@
 package com.sohu.jafka.log.index;
 
 import static org.junit.Assert.*;
-import com.sohu.jafka.message.MessageIdCenter;
+
+import com.sohu.jafka.log.LogSegment;
+import com.sohu.jafka.message.*;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.*;
@@ -16,13 +19,24 @@ import java.util.concurrent.TimeUnit;
  */
 public class LogIndexSegmentTest {
 
+    //private String fileName = "/Users/rockybean/Documents/workspace/java/adyliu/build/data/demo-0/00000000000000000000.jafka.idx";
+    //private String logFileName = "/Users/rockybean/Documents/workspace/java/adyliu/build/data/demo-0/00000000000000000000.jafka";
+    private String fileName = "1.jafka.idx";
+    private String logFileName = null;
     private File idxFile;
     private LogIndexSegment idxSegment;
 
-    public void createIndexSegments() throws FileNotFoundException {
-        idxFile = new File("1.jafka.idx");
+    @Before
+    public void createIndexSegments() throws IOException {
+        idxFile = new File(fileName);
         FileChannel channel = new RandomAccessFile(idxFile,"rw").getChannel();
-        idxSegment = new LogIndexSegment(idxFile,channel,null,false);
+        LogSegment logSegment = null;
+        if(logFileName != null){
+            File logFile = new File(logFileName);
+            FileMessageSet fms = new FileMessageSet(new RandomAccessFile(logFile,"rw").getChannel(),true);
+            logSegment = new LogSegment(logFile,fms,0);
+        }
+        idxSegment = new LogIndexSegment(idxFile,channel,logSegment,false);
     }
 
     public void createLogIndexSegments(int num,int interval) throws IOException{
@@ -50,7 +64,6 @@ public class LogIndexSegmentTest {
 
     @Test
     public void testIndexSegment() throws IOException {
-        createIndexSegments();
         createLogIndexSegments(new Random().nextInt(10000),0);
         //createLogIndexSegments(100,0);
         /*for(int i = 1;i <= idxSegment.getIndexNum();i++){
@@ -71,7 +84,6 @@ public class LogIndexSegmentTest {
         LogIndex firstIdx = idxSegment.getLogIndexAt(firstIdxNum <= 0?1:firstIdxNum);
         assertEquals(firstIdx.getOffset(),offset);
         assertEquals(firstIdx.getMessageId().getTimestamp(), time);
-        closeLogIndexSegments();
     }
 
     /*@Test
@@ -96,6 +108,23 @@ public class LogIndexSegmentTest {
         System.out.println("right time is "+rightIdx.getMessageId().getTimestamp()+",right idx seq is "+rightIdx.getMessageId().getSequenceId());
         assertEquals(rightIdx!=null?rightIdx.getOffset():-1,idxSegment.getOffsetByTime(getTime));
     }
+
+    /*@Ignore
+    @Test
+    public void readSements() throws IOException {
+        for(int i = 1; i <= idxSegment.getIndexNum();i++){
+            LogIndex idx = idxSegment.getLogIndexAt(i);
+            System.out.println(String.format("[%d]Index with MessageId[%d][%s],offset[%d]",
+                    i,idx.getMessageIdLongValue(),idx.getMessageId(),idx.getOffset()));
+        }
+        MessageSet ms = idxSegment.getMessageSetByTime(1346237534228L, 32);
+        for(MessageAndOffset mao : ms){
+
+            System.out.println(mao.message);
+        }
+
+
+    }*/
 
 
     @After

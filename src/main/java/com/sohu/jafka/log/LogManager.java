@@ -211,6 +211,7 @@ public class LogManager implements PartitionChooser, Closeable {
         logger.debug("stop topic register task");
     }
 
+
     class TopicRegisterTask extends Thread {
 
         @Override
@@ -589,6 +590,22 @@ public class LogManager implements PartitionChooser, Closeable {
         }
         return ILog.EMPTY_OFFSETS;
     }
+
+    /**
+     * get offset using index
+     * @param offsetRequest
+     * @return
+     */
+    public List<Long> getOffsetsUsingIndex(OffsetRequest offsetRequest) {
+        ILog log = getLog(offsetRequest.topic,offsetRequest.partition);
+        long offset = -1;
+        if(log != null)
+            offset = log.getOffsetUsingIndex(offsetRequest);
+        List<Long> rtnLst = new ArrayList<Long>();
+        rtnLst.add(offset);
+        return rtnLst;
+    }
+
 
    public Map<String, Integer> getTopicPartitionsMap() {
         return topicPartitionsMap;

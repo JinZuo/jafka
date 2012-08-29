@@ -29,6 +29,7 @@ import com.sohu.jafka.common.ErrorMapping;
 import com.sohu.jafka.common.annotations.ClientSide;
 import com.sohu.jafka.common.annotations.ThreadSafe;
 import com.sohu.jafka.message.ByteBufferMessageSet;
+import com.sohu.jafka.message.Message;
 import com.sohu.jafka.network.Receive;
 import com.sohu.jafka.utils.KV;
 
@@ -50,14 +51,31 @@ public class SimpleConsumer extends SimpleOperation implements IConsumer {
         super(host, port, soTimeout, bufferSize);
     }
 
+
     public ByteBufferMessageSet fetch(FetchRequest request) throws IOException {
         KV<Receive, ErrorMapping> response = send(request);
         return new ByteBufferMessageSet(response.k.buffer(), request.offset, response.v);
     }
 
+    /**
+     * return the offset contained in the jafka file name before time
+     * @param topic message topic
+     * @param partition topic partition
+     * @param time the log file created time {@link OffsetRequest#time}
+     * @param maxNumOffsets the number of offsets
+     * @return
+     * @throws IOException
+     */
     public long[] getOffsetsBefore(String topic, int partition, long time, int maxNumOffsets) throws IOException {
         KV<Receive, ErrorMapping> response = send(new OffsetRequest(topic, partition, time, maxNumOffsets));
         return OffsetRequest.deserializeOffsetArray(response.k.buffer());
+    }
+
+    public long getOffsetUsingIndex(String topic, int partition, long time) throws IOException {
+        if(Message.CurrentMagicValue < Message.MAGIC_VERSION_WITH_ID)
+            throw new IllegalStateException("Your client message version is too old! Please upgrade your files!");
+       KV<Receive, ErrorMapping> response = send(new OffsetRequest(topic,partition,time,-1));
+        return OffsetRequest.deserializeOffsetArray(response.k.buffer())[0];
     }
 
     public MultiFetchResponse multifetch(List<FetchRequest> fetches) throws IOException {

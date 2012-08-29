@@ -38,6 +38,10 @@ public class OffsetsHandler extends AbstractHandler {
 
     public Send handler(RequestKeys requestType, Receive request) {
         OffsetRequest offsetRequest = OffsetRequest.readFrom(request.buffer());
-        return new OffsetArraySend(logManager.getOffsets(offsetRequest));
+        if(offsetRequest.maxNumOffsets > 0){
+            return new OffsetArraySend(logManager.getOffsets(offsetRequest));
+        }else{
+            return new OffsetArraySend(logManager.getOffsetsUsingIndex(offsetRequest));
+        }
     }
 }

@@ -24,27 +24,20 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import com.sohu.jafka.log.index.IndexSegmentList;
 import com.sohu.jafka.log.index.LogIndexSegment;
+import com.sohu.jafka.message.*;
 import com.sohu.jafka.server.Server;
 import org.apache.log4j.Logger;
 
 import com.sohu.jafka.api.OffsetRequest;
 import com.sohu.jafka.common.InvalidMessageSizeException;
 import com.sohu.jafka.common.OffsetOutOfRangeException;
-import com.sohu.jafka.message.ByteBufferMessageSet;
-import com.sohu.jafka.message.FileMessageSet;
-import com.sohu.jafka.message.InvalidMessageException;
-import com.sohu.jafka.message.MessageAndOffset;
-import com.sohu.jafka.message.MessageSet;
 import com.sohu.jafka.mx.BrokerTopicStat;
 import com.sohu.jafka.mx.LogStats;
 import com.sohu.jafka.utils.KV;
@@ -105,7 +98,7 @@ public class Log implements ILog {
         Utils.registerMBean(logStats);
         segments = loadSegments();
         //init index segment list
-        idxSegments = loadIdxSegments(segments);
+        loadIdxSegments(segments);
     }
 
 
@@ -153,10 +146,11 @@ public class Log implements ILog {
 
 
     //todo:alfred: realize this method，only load the existing index segments.If there is not a corresponding index file for a jafka file,skip.
-    private IndexSegmentList loadIdxSegments(SegmentList segments) throws IOException {
+    private void loadIdxSegments(SegmentList segments) throws IOException {
         List<LogSegment> segmentsList = segments.getView();
         List<LogIndexSegment> idxSegmentList = new ArrayList<LogIndexSegment>();
 
+        boolean roll = false;
         for(LogSegment logSegment:segmentsList){
             String idxFilePath = logSegment.getFile().getAbsolutePath();
             idxFilePath += LogIndexSegment.FILE_SUFFIX;
@@ -166,29 +160,30 @@ public class Log implements ILog {
                 if(logSegment.isMutable()){
                     //If the last log segment file still have no index file, create a new jafka file with index file
                     if(logSegment.size() != 0){
-                        roll();
-                        idxFilePath = segments.getLastView().getFile().getAbsolutePath()+LogIndexSegment.FILE_SUFFIX;
+                        roll = true;
+                    }else{
+                        //create an index file for this segment file
+                        file.createNewFile();
+                        FileChannel channel = new RandomAccessFile(file,"rw").getChannel();
+                        LogIndexSegment idxSegment = new LogIndexSegment(file,channel,logSegment,false);
+                        idxSegmentList.add(idxSegment);
                     }
-                    //create the index file and break the loop
-                    file = new File(idxFilePath);
-                    if(file.exists())
-                        file.delete();
-                    file.createNewFile();
-                    FileChannel channel = new RandomAccessFile(file,"rw").getChannel();
-                    LogIndexSegment idxSeg = new LogIndexSegment(file,channel,logSegment,needRecovery);
-                    idxSegmentList.add(idxSeg);
-                    logger.info("index feature has been enabled -> create a new jafka and idx file for the new messages!");
                     break;
                 }
                 continue;
             }else{
-                logger.info("Loading index file ["+idxFilePath+"] succeed!");
+                logger.info("Loading index file [" + idxFilePath + "] succeed!");
                 FileChannel channel = logSegment.isMutable()?new RandomAccessFile(file,"rw").getChannel():new FileInputStream(file).getChannel();
                 LogIndexSegment idxSeg = new LogIndexSegment(file,channel,logSegment,needRecovery);
                 idxSegmentList.add(idxSeg);
             }
         }
-        return new IndexSegmentList(name,idxSegmentList);
+
+        idxSegments = new IndexSegmentList(name,idxSegmentList);
+        //roll if the last segment have no index file to keep the message number are same in log segment and index segment.
+        if(roll){
+            roll();
+        }
     }
 
     /**
@@ -232,7 +227,6 @@ public class Log implements ILog {
                 }
             }
 
-            //todo:alfred:close index files
             for(LogIndexSegment idxSeg : idxSegments.getView()){
                 try {
                     idxSeg.close();
@@ -266,6 +260,21 @@ public class Log implements ILog {
         return found.getMessageSet().read(offset - found.start(), length);
     }
 
+    /**
+     * read the messages after some time
+     * @param time  milliseconds
+     * @param length bytes
+     * @return
+     * @throws IOException
+     */
+    //todo:alfred:test this method
+    public MessageSet readByTime(long time, int length) throws IOException {
+        LogIndexSegment idxSegment = idxSegments.getLogIndexSegmentByTime(time);
+        long offset = idxSegment.getOffsetByTime(time);
+        return idxSegment.getLogSegment().getMessageSet().read(offset,length);
+    }
+
+
     public List<Long> append(ByteBufferMessageSet messages) {
         //validate the messages
         int numberOfMessages = 0;
@@ -293,12 +302,33 @@ public class Log implements ILog {
         synchronized (lock) {
             try {
                 LogSegment lastSegment = segments.getLastView();
-                //written bytes and the total file size after written
+                //written bytes and the total file size before written
                 long[] writtenAndOffset = lastSegment.getMessageSet().append(validMessages);
                 if (logger.isTraceEnabled()) {
                     logger.trace(String.format("[%s,%s] save %d messages, bytes %d", name, lastSegment.getName(),
                             numberOfMessages, writtenAndOffset[0]));
                 }
+
+                Iterator<MessageAndOffset> iter = validMessages.internalIterator(true);
+                LogIndexSegment idxSegment = idxSegments.getLastView();
+                while(iter.hasNext()){
+                    MessageAndOffset msgAndOffset = iter.next();
+                    //the message set in this ByteBufferMessageSet
+                    long msgOffsetInSet = msgAndOffset.offset - msgAndOffset.message.serializedSize();
+                    long fileOffset = writtenAndOffset[1]+msgOffsetInSet;
+                    logger.info("**********" + String.format("written[%d],msgOffset[%d],fileoffset[%d]---(%s)", writtenAndOffset[0], msgOffsetInSet, fileOffset, this.dir.getName()));
+                    if(msgAndOffset.message.compressionCodec() != CompressionCodec.NoCompressionCodec){
+                        //if this message is a compressed message,add all its messages to the index with this message file offset
+                       ByteBufferMessageSet msgSets = CompressionUtils.decompress(msgAndOffset.message);
+                       for(MessageAndOffset tmpMsgAndOffset:msgSets){
+                           idxSegment.append(tmpMsgAndOffset.message.messageId(),fileOffset);
+                       }
+                    }else{
+                        idxSegment.append(msgAndOffset.message.messageId(),fileOffset);
+                    }
+
+                }
+
                 maybeFlush(numberOfMessages);
                 maybeRoll(lastSegment);
 
@@ -336,8 +366,23 @@ public class Log implements ILog {
                             "delete exist file(who will be created for rolling over) failed: " + newFile);
                 }
             }
-            logger.info("Rolling log '" + name + "' to " + newFile.getName());
             segments.append(new LogSegment(newFile, new FileMessageSet(newFile, true), newOffset));
+
+            //create the index file
+            File idxFile = new File(newFile.getAbsolutePath()+LogIndexSegment.FILE_SUFFIX);
+            if(idxFile.exists()){
+                logger.warn("newly rolled index segment file "+idxFile.getName()+" already exists, deleting it first");
+                if(!idxFile.delete()){
+                    logger.error("delete exist file failed:"+idxFile);
+                    throw new RuntimeException("delete exist file failed:"+idxFile);
+                }
+            }
+            idxFile.createNewFile();
+            FileChannel channel = new RandomAccessFile(idxFile,"rw").getChannel();
+            LogIndexSegment idxSeg = new LogIndexSegment(idxFile,channel,segments.getLastView(),needRecovery);
+            idxSegments.append(idxSeg);
+
+            logger.info("Rolling log '" + name + "' to " + newFile.getName() + " and create its index file!");
         }
     }
 
@@ -529,6 +574,19 @@ public class Log implements ILog {
             startIndex -= 1;
         }
         return ret;
+    }
+
+    @Override
+    public long getOffsetUsingIndex(OffsetRequest offsetRequest) {
+        LogIndexSegment idxSegment = idxSegments.getLogIndexSegmentByTime(offsetRequest.time);
+        if(idxSegment == null)
+            return -1;
+        try {
+            return idxSegment.getOffsetByTime(offsetRequest.time);
+        } catch (IOException e) {
+            logger.error("io error",e);
+            return -1;
+        }
     }
 
     @Override

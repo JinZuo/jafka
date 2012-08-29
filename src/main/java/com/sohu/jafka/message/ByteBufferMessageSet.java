@@ -156,6 +156,7 @@ public class ByteBufferMessageSet extends MessageSet{
             Message newMessage = new Message(message);
             if(isShallow) {
                 currValidBytes += 4 +size;
+                //The offset means the position of the message in this message set.
                 return new MessageAndOffset(newMessage, currValidBytes);
             }
             if(newMessage.compressionCodec() == CompressionCodec.NoCompressionCodec) {

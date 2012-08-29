@@ -1,7 +1,10 @@
 package com.sohu.jafka.log.index;
 
 import com.sohu.jafka.log.LogSegment;
+import com.sohu.jafka.message.ByteBufferMessageSet;
+import com.sohu.jafka.message.Message;
 import com.sohu.jafka.message.MessageId;
+import com.sohu.jafka.message.MessageSet;
 import org.apache.log4j.Logger;
 
 import java.io.File;
@@ -145,14 +148,25 @@ public class LogIndexSegment {
         if(indexNum <= 0)
             return -1;
 
-        int low = 1;
-        int high = indexNum;
-        int mid = (low+high)/2;
 
         LogIndex idx = null;
         int idxNum = -1;
 
-        while(low <= mid && mid <= high){
+        int low = 1;
+        int high = indexNum;
+        int mid ;
+
+        idx = getLogIndexAt(low);
+        if(time <= idx.getMessageId().getTimestamp()){
+            return idx.getOffset();
+        }
+        idx = getLogIndexAt(high);
+        if(time > idx.getMessageId().getTimestamp()){
+            return -1;
+        }
+
+        while(low <= high){
+            mid = (low+high)/2;
             if(mid < 1)
                 throw new IllegalStateException("error");
             LogIndex leftIdx = getLogIndexAt(mid);
@@ -178,7 +192,6 @@ public class LogIndexSegment {
             }else{
                 low = mid + 1;
             }
-            mid = (low + high)/2;
         }
 
         if(idx != null){
@@ -193,6 +206,20 @@ public class LogIndexSegment {
         }
 
         return -1;
+    }
+
+    /**
+     * just for test
+     * @param time
+     * @param length
+     * @return
+     * @throws IOException
+     */
+    public MessageSet getMessageSetByTime(long time, int length) throws IOException {
+        long offset = getOffsetByTime(time);
+        MessageSet messageSet = this.logSegment.getMessageSet().read(offset, length);
+        //should return a byteBufferMessageSet
+        return messageSet;
     }
 
     public void close() throws IOException {
@@ -234,6 +261,10 @@ public class LogIndexSegment {
 
     public long getSizeInBytes(){
         return this.size;
+    }
+
+    public LogSegment getLogSegment(){
+        return logSegment;
     }
 
     /**

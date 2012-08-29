@@ -30,12 +30,19 @@ public class IndexSegmentList {
      */
     public LogIndexSegment getLogIndexSegmentByTime(long time){
         int low = 0;
-        int high = segmentsList.get().size();
-        if(high == 0)
+        int high = segmentsList.get().size()-1;
+
+        if(high < 0){
             return null;
+        }
+
+        if(time <= segmentsList.get().get(low).getStartTime()){
+            return segmentsList.get().get(low);
+        }
+
         int mid;
         while(low <= high){
-            mid = low + (high - low)/2;
+            mid = (low + high)/2;
             LogIndexSegment tmp = segmentsList.get().get(mid);
             int containRes = tmp.contains(time);
             if(containRes == 0){
@@ -76,5 +83,9 @@ public class IndexSegmentList {
                 return;
            }
          }
+    }
+
+    public LogIndexSegment getLastView() {
+        return segmentsList.get().get(size()-1);
     }
 }
