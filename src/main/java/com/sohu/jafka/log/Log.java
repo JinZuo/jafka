@@ -157,6 +157,7 @@ public class Log implements ILog {
             File file = new File(idxFilePath);
             if(!file.exists()){
                 logger.warn("Loading index file ["+idxFilePath+"] failed => not exists!");
+                //if this is the last logsegment
                 if(logSegment.isMutable()){
                     //If the last log segment file still have no index file, create a new jafka file with index file
                     if(logSegment.size() != 0){
@@ -164,17 +165,18 @@ public class Log implements ILog {
                     }else{
                         //create an index file for this segment file
                         file.createNewFile();
-                        FileChannel channel = new RandomAccessFile(file,"rw").getChannel();
-                        LogIndexSegment idxSegment = new LogIndexSegment(file,channel,logSegment,false);
+                        //FileChannel channel = new RandomAccessFile(file,"rw").getChannel();
+                        FileChannel channel = Utils.openChannel(file,true);
+                        LogIndexSegment idxSegment = new LogIndexSegment(file,channel,true,logSegment,false);
                         idxSegmentList.add(idxSegment);
                     }
                     break;
                 }
-                continue;
             }else{
                 logger.info("Loading index file [" + idxFilePath + "] succeed!");
-                FileChannel channel = logSegment.isMutable()?new RandomAccessFile(file,"rw").getChannel():new FileInputStream(file).getChannel();
-                LogIndexSegment idxSeg = new LogIndexSegment(file,channel,logSegment,needRecovery);
+                //FileChannel channel = logSegment.isMutable()?new RandomAccessFile(file,"rw").getChannel():new FileInputStream(file).getChannel();
+                FileChannel channel = Utils.openChannel(file,logSegment.isMutable());
+                LogIndexSegment idxSeg = new LogIndexSegment(file,channel,logSegment.isMutable(),logSegment,logSegment.isMutable()?needRecovery:false);
                 idxSegmentList.add(idxSeg);
             }
         }
@@ -189,6 +191,9 @@ public class Log implements ILog {
     /**
      * Check that the ranges and sizes add up, otherwise we have lost some data somewhere
      */
+    //todo:alfred: how to validate index segments
+    //index segments中是针对每一条消息创建的索引，如果有压缩消息的话，如何获取所有的消息数目？
+    //index size%64==0可以校验准确性，保证索引，但校验是否
     private void validateSegments(List<LogSegment> segments) {
         synchronized (lock) {
             for (int i = 0; i < segments.size() - 1; i++) {
@@ -378,8 +383,9 @@ public class Log implements ILog {
                 }
             }
             idxFile.createNewFile();
-            FileChannel channel = new RandomAccessFile(idxFile,"rw").getChannel();
-            LogIndexSegment idxSeg = new LogIndexSegment(idxFile,channel,segments.getLastView(),needRecovery);
+            //FileChannel channel = new RandomAccessFile(idxFile,"rw").getChannel();
+            FileChannel channel = Utils.openChannel(idxFile,true);
+            LogIndexSegment idxSeg = new LogIndexSegment(idxFile,channel,true,segments.getLastView(),false);
             idxSegments.append(idxSeg);
 
             logger.info("Rolling log '" + name + "' to " + newFile.getName() + " and create its index file!");
@@ -420,6 +426,8 @@ public class Log implements ILog {
                         .currentTimeMillis());
             }
             segments.getLastView().getMessageSet().flush();
+            //flush index too
+            idxSegments.getLastView().flush();
             unflushed.set(0);
             lastflushedTime.set(System.currentTimeMillis());
         }

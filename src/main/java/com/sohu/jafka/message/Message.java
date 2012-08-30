@@ -93,13 +93,12 @@ public class Message implements ICalculable {
      *        (compression)
      */
     public static int crcOffset(byte magic) {
-        switch (magic) {
-            case MAGIC_VERSION2:
+        //use if not switch because the later version is all based on MAGIC_VERSION_WITH_ID
+        //So these method do not need change then
+            if(magic == MAGIC_VERSION2)
                 return ATTRIBUTE_OFFSET + ATTRIBUTE_LENGTH;
-            case MAGIC_VERSION_WITH_ID:
+            if(magic >= MAGIC_VERSION_WITH_ID)
                 return MESSAGE_ID_OFFSET + MESSAGE_ID_LENGTH;
-
-        }
         throw new UnknownMagicByteException(format("Magic byte value of %d is unknown", magic));
     }
 
@@ -112,11 +111,15 @@ public class Message implements ICalculable {
      *        and 1 0 for no compression 1 for compression
      */
     public static int payloadOffset(byte magic) {
-        return msgDataOffset(magic) + MESSAGE_DATA_LENGTH;
+        if(magic == MAGIC_VERSION2)
+            return msgDataLengthOffset(magic);
+        if(magic >= MAGIC_VERSION_WITH_ID)
+            return msgDataLengthOffset(magic) + MESSAGE_DATA_LENGTH;
+        throw new  UnknownMagicByteException(format("unkown magic bytes %d",magic));
     }
 
-    public static int msgDataOffset(byte magic){
-        return crcOffset(magic) + CrcLength;
+    public static int msgDataLengthOffset(byte magic){
+                return crcOffset(magic) + CrcLength;
     }
 
     /**
@@ -168,7 +171,9 @@ public class Message implements ICalculable {
         }
         Utils.putUnsignedInt(buffer,checksum);
         //add msg data length
-        buffer.putInt(bytes.length);
+        if(CurrentMagicValue >= MAGIC_VERSION_WITH_ID){
+            buffer.putInt(bytes.length);
+        }
         buffer.put(bytes);
         buffer.rewind();
     }
@@ -233,8 +238,11 @@ public class Message implements ICalculable {
     }
 
     public int payloadSize() {
-        //return getSizeInBytes() - headerSize(magic());
-        return buffer.getInt(msgDataOffset(CurrentMagicValue));
+       if(magic() == MAGIC_VERSION2)
+                return getSizeInBytes() - headerSize(magic());
+       if(magic() >= MAGIC_VERSION_WITH_ID)
+                return buffer.getInt(msgDataLengthOffset(magic()));
+       throw new UnknownMagicByteException(format("unkown magic byte %d",magic()));
     }
 
     public byte attributes() {

@@ -41,9 +41,14 @@ public class LogIndexSegment {
     private boolean mutable;
 
     public LogIndexSegment(File file, FileChannel channel, LogSegment logSegment, boolean needRecovery){
+        this(file,channel,false,logSegment,needRecovery);
+    }
+
+    public LogIndexSegment(File file, FileChannel channel, boolean mutable,LogSegment logSegment, boolean needRecovery){
         this.idxFile = file;
         this.channel = channel;
         this.logSegment = logSegment;
+        this.mutable = mutable;
 
         if(needRecovery){
             recover();
@@ -78,6 +83,7 @@ public class LogIndexSegment {
     private boolean recoverQuick() {
         return false;
     }
+
 
     public void append(long messageId,long offset) throws IOException {
         ByteBuffer buffer = ByteBuffer.allocate(INDEX_BYTES_NUM);
@@ -136,13 +142,17 @@ public class LogIndexSegment {
     }
 
 
+    public long getOffsetByTime(long time) throws IOException{
+        long fileOffset = getFileOffsetByTime(time);
+        return fileOffset + logSegment.start();
+    }
     /**
      * get the first message offset equal or bigger than time
      * @param time
      * @return
      */
-    //todo:alfred:getIndexNum会不会受到多线程的影响？有人写有人查的时候？copyonwrite
-    public long getOffsetByTime(long time) throws IOException {
+    //todo:alfred:getIndexNum会不会受到多线程的影响？有人写有人查的时候？copyonwrite!!!
+    public long getFileOffsetByTime(long time) throws IOException {
         if(getIndexNum() == 0)
             return -1;
         int partitionId = new MessageId(startMsgId).getPartitionId();

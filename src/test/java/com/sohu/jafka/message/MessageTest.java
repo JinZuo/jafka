@@ -53,7 +53,7 @@ public class MessageTest {
      */
     @Test
     public void testPayloadOffset() {
-        assertEquals(10, Message.payloadOffset((byte)1));
+        assertEquals(6, Message.payloadOffset((byte)1));
     }
 
     /**
@@ -61,7 +61,7 @@ public class MessageTest {
      */
     @Test
     public void testHeaderSize() {
-        assertEquals(10, Message.headerSize((byte)1));
+        assertEquals(6, Message.headerSize((byte)1));
     }
 
    

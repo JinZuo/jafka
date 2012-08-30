@@ -75,7 +75,7 @@ public class LogIndexSegmentTest {
         LogIndex randomIdx = idxSegment.getLogIndexAt(idxNum);
         long time = randomIdx.getMessageId().getTimestamp();
         long startTime = System.currentTimeMillis();
-        long offset = idxSegment.getOffsetByTime(time);
+        long offset = idxSegment.getFileOffsetByTime(time);
         System.out.println("use time:"+(System.currentTimeMillis()-startTime)+"ms");
         System.out.println(idxNum+"----->"+randomIdx+"??"+offset);
         //assertEquals(randomIdx.getOffset(), offset);
@@ -106,7 +106,7 @@ public class LogIndexSegmentTest {
         System.out.println("get time :"+getTime+",seqid is "+idx.getMessageId().getSequenceId());
         System.out.println("current time is "+idx.getMessageId().getTimestamp()+",current idx seq is "+idx.getMessageId().getSequenceId());
         System.out.println("right time is "+rightIdx.getMessageId().getTimestamp()+",right idx seq is "+rightIdx.getMessageId().getSequenceId());
-        assertEquals(rightIdx!=null?rightIdx.getOffset():-1,idxSegment.getOffsetByTime(getTime));
+        assertEquals(rightIdx!=null?rightIdx.getOffset():-1,idxSegment.getFileOffsetByTime(getTime));
     }
 
     /*@Ignore

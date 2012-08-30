@@ -57,6 +57,7 @@ public abstract class MessageSet implements Iterable<MessageAndOffset> {
     }
 
     public static int entrySize(Message message) {
+        //todo:use message.serializedSize is better?
         return LogOverhead + message.getSizeInBytes();
     }
 
