@@ -17,13 +17,6 @@
 
 package com.sohu.jafka.consumer;
 
-import java.io.Closeable;
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.nio.channels.SocketChannel;
-
-import org.apache.log4j.Logger;
-
 import com.sohu.jafka.api.FetchRequest;
 import com.sohu.jafka.common.ErrorMapping;
 import com.sohu.jafka.common.annotations.ClientSide;
@@ -35,6 +28,12 @@ import com.sohu.jafka.network.Receive;
 import com.sohu.jafka.network.Request;
 import com.sohu.jafka.utils.Closer;
 import com.sohu.jafka.utils.KV;
+import org.apache.log4j.Logger;
+
+import java.io.Closeable;
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.nio.channels.SocketChannel;
 
 /**
  * Simple operation with jafka broker

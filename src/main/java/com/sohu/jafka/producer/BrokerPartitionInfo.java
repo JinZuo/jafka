@@ -18,12 +18,12 @@
 package com.sohu.jafka.producer;
 
 
+import com.sohu.jafka.cluster.Broker;
+import com.sohu.jafka.cluster.Partition;
+
 import java.io.Closeable;
 import java.util.Map;
 import java.util.SortedSet;
-
-import com.sohu.jafka.cluster.Broker;
-import com.sohu.jafka.cluster.Partition;
 
 /**
  * @author adyliu (imxylz@gmail.com)

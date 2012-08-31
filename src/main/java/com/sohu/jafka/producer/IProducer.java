@@ -17,11 +17,11 @@
 
 package com.sohu.jafka.producer;
 
-import java.io.Closeable;
-
 import com.sohu.jafka.common.InvalidPartitionException;
 import com.sohu.jafka.common.NoBrokersForPartitionException;
 import com.sohu.jafka.producer.serializer.Encoder;
+
+import java.io.Closeable;
 
 /**
  * Producer interface

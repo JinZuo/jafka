@@ -71,13 +71,15 @@ public class SimpleConsumerTest extends BaseJafkaServer {
             props.put("brokerid","2");
             props.put("log.flush.interval", "1");
             props.put("log.default.flush.scheduler.interval.ms", "100");//flush to disk every 100ms
-            props.put("log.file.size", "5120");//5k for rolling
+            props.put("log.file.size", "100000000");//5k for rolling
             //props.put("log.retention.size","1000000");
             props.put("num.partitions", "" + partitions);//default divided three partitions
             props.put("port", ""+jafkaPort);
             jafka = createJafka(props);
-           //sendSomeMessages(1000,"demo","test");
-            sendSomeMessages(11113,"demo");
+           //sendSomeMessages(1000,"demo");
+            long startTime = System.currentTimeMillis();
+            sendSomeMessages(1000,"demo");
+            System.out.println("send messages use time:"+(System.currentTimeMillis()-startTime)+"ms");
             flush(jafka);
             
             LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(1));
@@ -205,17 +207,18 @@ public class SimpleConsumerTest extends BaseJafkaServer {
 
     @Test
     public void testGetOffsetUsingIndex() throws IOException {
-        long queryTime = System.currentTimeMillis() - 1000;
+        long queryTime = System.currentTimeMillis() - 5000;
         try {
-            Thread.sleep(2000);
+            Thread.sleep(5000);
         } catch (InterruptedException e) {
             e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }
         System.out.println("queryTime is "+queryTime);
         long[] offsetArr = new long[3];
         for(int i=0;i<partitions;i++){
+            long startTime = System.currentTimeMillis();
              offsetArr[i] = consumer.getOffset("demo", i, queryTime);
-            System.out.println(String.format("offset in partition(%d) is %d",i,offsetArr[i]));
+            System.out.println(String.format("use Time[%d]!!!offset in partition(%d) is %d",(System.currentTimeMillis()-startTime),i,offsetArr[i]));
         }
         //assertTrue(offset >= 0);
         /*ByteBufferMessageSet messageSet = consumer.fetch(new FetchRequest("demo",0,offset,1000*1000));

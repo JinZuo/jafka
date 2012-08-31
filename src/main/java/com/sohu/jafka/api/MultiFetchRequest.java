@@ -17,11 +17,11 @@
 
 package com.sohu.jafka.api;
 
+import com.sohu.jafka.network.Request;
+
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
-
-import com.sohu.jafka.network.Request;
 
 /**
  * Multi fetch request

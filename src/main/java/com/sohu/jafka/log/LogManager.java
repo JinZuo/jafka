@@ -17,7 +17,21 @@
 
 package com.sohu.jafka.log;
 
-import static java.lang.String.format;
+import com.sohu.jafka.api.OffsetRequest;
+import com.sohu.jafka.api.PartitionChooser;
+import com.sohu.jafka.common.InvalidPartitionException;
+import com.sohu.jafka.log.index.LogIndexSegment;
+import com.sohu.jafka.server.ServerConfig;
+import com.sohu.jafka.server.ServerRegister;
+import com.sohu.jafka.server.TopicTask;
+import com.sohu.jafka.server.TopicTask.TaskType;
+import com.sohu.jafka.utils.Closer;
+import com.sohu.jafka.utils.IteratorTemplate;
+import com.sohu.jafka.utils.KV;
+import com.sohu.jafka.utils.Pool;
+import com.sohu.jafka.utils.Scheduler;
+import com.sohu.jafka.utils.Utils;
+import org.apache.log4j.Logger;
 
 import java.io.Closeable;
 import java.io.File;
@@ -32,23 +46,7 @@ import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import com.sohu.jafka.log.index.LogIndexSegment;
-import com.sohu.jafka.server.Server;
-import org.apache.log4j.Logger;
-
-import com.sohu.jafka.api.OffsetRequest;
-import com.sohu.jafka.api.PartitionChooser;
-import com.sohu.jafka.common.InvalidPartitionException;
-import com.sohu.jafka.server.ServerConfig;
-import com.sohu.jafka.server.ServerRegister;
-import com.sohu.jafka.server.TopicTask;
-import com.sohu.jafka.server.TopicTask.TaskType;
-import com.sohu.jafka.utils.Closer;
-import com.sohu.jafka.utils.IteratorTemplate;
-import com.sohu.jafka.utils.KV;
-import com.sohu.jafka.utils.Pool;
-import com.sohu.jafka.utils.Scheduler;
-import com.sohu.jafka.utils.Utils;
+import static java.lang.String.format;
 
 /**
  * @author adyliu (imxylz@gmail.com)
@@ -307,19 +305,12 @@ public class LogManager implements PartitionChooser, Closeable {
      * Attemps to delete all provided segments from a log and returns how many it was able to
      */
     private int deleteSegments(Log log, List<LogSegment> segments) {
-         //todo:alfred:将该log中的idxSegment进行一下trunc，方法为trunc(segments),
-        //如果segements和idxSegments的个数相同，那么可以直接trunc(count),否则，trunc文件名相同的
-        //todo:alfred:trunc index segments too. find when `delete` is called
-        //todo:alfred:idxSegments 的删除要自己完成，因为它的长度可能与segments不同，不能trunc count
-        //tod:alfred:或者遍历返回的要删除的segments，然后进行trunc，这是比较可行的
-        //the index quantity may differ from the log segment quantity
+        //delete the index firstly
         List<LogIndexSegment> idxSegmentLst = log.getIdxSegments().trunc(segments);
 
-         //todo:alfred:先删索引，再删数据，即便删数据失败了也不会导致崩溃
         if(idxSegmentLst != null){
         int idxTotal = 0;
         for(LogIndexSegment idxSegment:idxSegmentLst){
-             //add fail check code
              try {
                  idxSegment.close();
              } catch (IOException e) {
@@ -336,6 +327,7 @@ public class LogManager implements PartitionChooser, Closeable {
         }
 
 
+        //delete log
         int total = 0;
         for (LogSegment segment : segments) {
             boolean deleted = false;
@@ -345,8 +337,7 @@ public class LogManager implements PartitionChooser, Closeable {
                 } catch (IOException e) {
                     logger.warn(e.getMessage(), e);
                 }
-                //todo:alfred:change delete method to delete index files at the same time
-                //todo:alfred:这段代码逻辑貌似有问题？！deleted的标注
+
                 if (!segment.getFile().delete()) {
                     deleted = true;
                 } else {

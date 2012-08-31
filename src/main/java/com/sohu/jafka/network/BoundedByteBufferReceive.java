@@ -17,14 +17,14 @@
 
 package com.sohu.jafka.network;
 
-import static java.lang.String.format;
+import com.sohu.jafka.common.annotations.ServerSide;
+import com.sohu.jafka.utils.Utils;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 
-import com.sohu.jafka.common.annotations.ServerSide;
-import com.sohu.jafka.utils.Utils;
+import static java.lang.String.format;
 
 /**
  * Receive data from socket

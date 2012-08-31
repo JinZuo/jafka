@@ -17,32 +17,42 @@
 
 package com.sohu.jafka.log;
 
-import static java.lang.String.format;
-
-import java.io.*;
-import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
-import java.text.NumberFormat;
-import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
-
-import com.sohu.jafka.log.index.IndexSegmentList;
-import com.sohu.jafka.log.index.LogIndexSegment;
-import com.sohu.jafka.message.*;
-import com.sohu.jafka.server.Server;
-import org.apache.log4j.Logger;
-
 import com.sohu.jafka.api.OffsetRequest;
 import com.sohu.jafka.common.InvalidMessageSizeException;
 import com.sohu.jafka.common.OffsetOutOfRangeException;
+import com.sohu.jafka.log.index.IndexSegmentList;
+import com.sohu.jafka.log.index.LogIndexSegment;
+import com.sohu.jafka.message.ByteBufferMessageSet;
+import com.sohu.jafka.message.CompressionCodec;
+import com.sohu.jafka.message.CompressionUtils;
+import com.sohu.jafka.message.FileMessageSet;
+import com.sohu.jafka.message.InvalidMessageException;
+import com.sohu.jafka.message.MessageAndOffset;
+import com.sohu.jafka.message.MessageSet;
 import com.sohu.jafka.mx.BrokerTopicStat;
 import com.sohu.jafka.mx.LogStats;
 import com.sohu.jafka.utils.KV;
 import com.sohu.jafka.utils.Range;
 import com.sohu.jafka.utils.Utils;
+import org.apache.log4j.Logger;
+
+import java.io.File;
+import java.io.FileFilter;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+import java.text.NumberFormat;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+
+import static java.lang.String.format;
 
 /**
  * a log is a message sets with more than one files.
@@ -76,9 +86,8 @@ public class Log implements ILog {
     private final LogStats logStats = new LogStats(this);
 
     private final SegmentList segments;
-    //todo:alfred:add IndexSegmentList
+    //index segment list
     private  IndexSegmentList idxSegments;
-
 
     public final int partition;
 
@@ -97,7 +106,7 @@ public class Log implements ILog {
         this.logStats.setMbeanName("jafka:type=jafka.logs." + name);
         Utils.registerMBean(logStats);
         segments = loadSegments();
-        //init index segment list
+        //load index segment list
         loadIdxSegments(segments);
     }
 
@@ -137,7 +146,6 @@ public class Log implements ILog {
         LogSegment last = accum.remove(accum.size() - 1);
         last.getMessageSet().close();
         logger.info("Loading the last segment " + last.getFile().getAbsolutePath() + " in mutable mode, recovery " + needRecovery);
-        //todo:alfred: check whether index files are correct
         LogSegment mutable = new LogSegment(last.getFile(), new FileMessageSet(last.getFile(), true, new AtomicBoolean(
                 needRecovery)), last.start());
         accum.add(mutable);
@@ -145,7 +153,11 @@ public class Log implements ILog {
     }
 
 
-    //todo:alfred: realize this method，only load the existing index segments.If there is not a corresponding index file for a jafka file,skip.
+    /**
+     * load existing index files for jafka file
+     * @param segments the loaded jafka file
+     * @throws IOException
+     */
     private void loadIdxSegments(SegmentList segments) throws IOException {
         List<LogSegment> segmentsList = segments.getView();
         List<LogIndexSegment> idxSegmentList = new ArrayList<LogIndexSegment>();
@@ -191,9 +203,6 @@ public class Log implements ILog {
     /**
      * Check that the ranges and sizes add up, otherwise we have lost some data somewhere
      */
-    //todo:alfred: how to validate index segments
-    //index segments中是针对每一条消息创建的索引，如果有压缩消息的话，如何获取所有的消息数目？
-    //index size%64==0可以校验准确性，保证索引，但校验是否
     private void validateSegments(List<LogSegment> segments) {
         synchronized (lock) {
             for (int i = 0; i < segments.size() - 1; i++) {
@@ -265,21 +274,6 @@ public class Log implements ILog {
         return found.getMessageSet().read(offset - found.start(), length);
     }
 
-    /**
-     * read the messages after some time
-     * @param time  milliseconds
-     * @param length bytes
-     * @return
-     * @throws IOException
-     */
-    //todo:alfred:test this method
-    public MessageSet readByTime(long time, int length) throws IOException {
-        LogIndexSegment idxSegment = idxSegments.getLogIndexSegmentByTime(time);
-        long offset = idxSegment.getOffsetByTime(time);
-        return idxSegment.getLogSegment().getMessageSet().read(offset,length);
-    }
-
-
     public List<Long> append(ByteBufferMessageSet messages) {
         //validate the messages
         int numberOfMessages = 0;
@@ -314,6 +308,7 @@ public class Log implements ILog {
                             numberOfMessages, writtenAndOffset[0]));
                 }
 
+                //create index data for every message
                 Iterator<MessageAndOffset> iter = validMessages.internalIterator(true);
                 LogIndexSegment idxSegment = idxSegments.getLastView();
                 while(iter.hasNext()){
@@ -587,7 +582,10 @@ public class Log implements ILog {
 
     @Override
     public long getOffsetUsingIndex(OffsetRequest offsetRequest) {
+        long startTime = System.nanoTime();
         LogIndexSegment idxSegment = idxSegments.getLogIndexSegmentByTime(offsetRequest.time);
+        logger.info(String.format("request time [%d] in [%s-%d] cost %d ns",offsetRequest.time,offsetRequest.topic,offsetRequest.partition,System.nanoTime()-startTime));
+        logger.info(String.format("in log [%s] ",this.toString()));
         if(idxSegment == null)
             return -1;
         try {

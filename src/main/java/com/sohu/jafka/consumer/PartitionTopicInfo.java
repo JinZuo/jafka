@@ -17,16 +17,15 @@
 
 package com.sohu.jafka.consumer;
 
-import static java.lang.String.format;
+import com.sohu.jafka.cluster.Partition;
+import com.sohu.jafka.common.ErrorMapping;
+import com.sohu.jafka.message.ByteBufferMessageSet;
+import org.apache.log4j.Logger;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.apache.log4j.Logger;
-
-import com.sohu.jafka.cluster.Partition;
-import com.sohu.jafka.common.ErrorMapping;
-import com.sohu.jafka.message.ByteBufferMessageSet;
+import static java.lang.String.format;
 
 /**
  * @author adyliu (imxylz@gmail.com)

@@ -17,10 +17,10 @@
 
 package com.sohu.jafka.log;
 
-import java.io.File;
-
 import com.sohu.jafka.message.FileMessageSet;
 import com.sohu.jafka.utils.Range;
+
+import java.io.File;
 
 /**
  * @author adyliu (imxylz@gmail.com)

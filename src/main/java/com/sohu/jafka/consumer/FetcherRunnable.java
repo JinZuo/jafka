@@ -17,17 +17,6 @@
 
 package com.sohu.jafka.consumer;
 
-import static java.lang.String.format;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import org.apache.log4j.Logger;
-
 import com.github.zkclient.ZkClient;
 import com.sohu.jafka.api.FetchRequest;
 import com.sohu.jafka.api.MultiFetchResponse;
@@ -40,6 +29,16 @@ import com.sohu.jafka.message.ByteBufferMessageSet;
 import com.sohu.jafka.utils.Closer;
 import com.sohu.jafka.utils.zookeeper.ZkGroupTopicDirs;
 import com.sohu.jafka.utils.zookeeper.ZkUtils;
+import org.apache.log4j.Logger;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import static java.lang.String.format;
 
 /**
  * @author adyliu (imxylz@gmail.com)

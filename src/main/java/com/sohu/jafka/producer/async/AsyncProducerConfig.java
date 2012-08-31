@@ -17,14 +17,13 @@
 
 package com.sohu.jafka.producer.async;
 
-import static com.sohu.jafka.utils.Utils.getInt;
-import static com.sohu.jafka.utils.Utils.getProps;
-import static com.sohu.jafka.utils.Utils.getString;
-
+import com.sohu.jafka.producer.SyncProducerConfig;
 
 import java.util.Properties;
 
-import com.sohu.jafka.producer.SyncProducerConfig;
+import static com.sohu.jafka.utils.Utils.getInt;
+import static com.sohu.jafka.utils.Utils.getProps;
+import static com.sohu.jafka.utils.Utils.getString;
 
 /**
  * @author adyliu (imxylz@gmail.com)

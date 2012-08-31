@@ -1,13 +1,15 @@
 package com.sohu.jafka.log.index;
 
 import com.sohu.jafka.log.LogSegment;
-import com.sohu.jafka.message.*;
-import com.sohu.jafka.utils.Utils;
+import com.sohu.jafka.message.ByteBufferMessageSet;
+import com.sohu.jafka.message.CompressionCodec;
+import com.sohu.jafka.message.CompressionUtils;
+import com.sohu.jafka.message.MessageAndOffset;
+import com.sohu.jafka.message.MessageId;
+import com.sohu.jafka.message.MessageSet;
 import org.apache.log4j.Logger;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
@@ -72,11 +74,7 @@ public class LogIndexSegment {
         }
     }
 
-    //todo:alfred:recover mode
-    //1.check the completeness of the index file:if its size can be divided evenly.
-    //2.check the jafka file, and at the same time, check the offset of its idx file
-    //3.if the idx file has errors, try to rebuild it.
-    //      create when
+    //recover index file
     public void recover() throws IOException {
         checkMutable();
         Iterator<MessageAndOffset> itr = logSegment.getMessageSet().iterator();
@@ -180,7 +178,6 @@ public class LogIndexSegment {
         }
     }
 
-    //todo:alfred:multi-thread write read problem??
     public LogIndex getLogIndexAt(int indexNum) throws IOException {
         if(this.indexNum <= 0 || indexNum <= 0 || indexNum > this.indexNum)
             return null;
@@ -222,12 +219,13 @@ public class LogIndexSegment {
      * get the first message offset equal or bigger than time
      * @param time
      * @return
+     * @author rockybean
      */
     public long getFileOffsetByTime(long time) throws IOException {
         if(getIndexNum() == 0)
             return -1;
         int partitionId = new MessageId(startMsgId).getPartitionId();
-        long expectedMsgId = MessageIdCenter.generateId(time,partitionId , 0);
+        long expectedMsgId = MessageId.generateId(time,partitionId , 0);
         LogIndex expectedIdx = getLogIndexByMsgId(expectedMsgId);
         if(expectedIdx == null){
             return -1;
@@ -284,7 +282,6 @@ public class LogIndexSegment {
     public MessageSet getMessageSetByTime(long time, int length) throws IOException {
         long offset = getOffsetByTime(time);
         MessageSet messageSet = this.logSegment.getMessageSet().read(offset, length);
-        //should return a byteBufferMessageSet
         return messageSet;
     }
 
@@ -297,7 +294,6 @@ public class LogIndexSegment {
     public void flush() throws IOException {
         checkMutable();
         channel.force(true);
-        //todo:alfred:add some statistics code
     }
 
     private void checkMutable(){

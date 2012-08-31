@@ -17,19 +17,18 @@
 
 package com.sohu.jafka.console;
 
-import java.io.IOException;
-import java.util.Properties;
-
 import com.sohu.jafka.producer.Producer;
 import com.sohu.jafka.producer.ProducerConfig;
 import com.sohu.jafka.producer.ProducerData;
 import com.sohu.jafka.producer.serializer.StringEncoder;
 import com.sohu.jafka.utils.Closer;
-
 import joptsimple.ArgumentAcceptingOptionSpec;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 import joptsimple.OptionSpec;
+
+import java.io.IOException;
+import java.util.Properties;
 
 /**
  * @author adyliu (imxylz@gmail.com)

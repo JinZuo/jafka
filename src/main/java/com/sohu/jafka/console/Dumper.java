@@ -17,18 +17,17 @@
 
 package com.sohu.jafka.console;
 
-import static java.lang.String.format;
-
-import java.io.File;
-
-import joptsimple.ArgumentAcceptingOptionSpec;
-import joptsimple.OptionParser;
-import joptsimple.OptionSet;
-
 import com.sohu.jafka.message.FileMessageSet;
 import com.sohu.jafka.message.Message;
 import com.sohu.jafka.message.MessageAndOffset;
 import com.sohu.jafka.utils.Utils;
+import joptsimple.ArgumentAcceptingOptionSpec;
+import joptsimple.OptionParser;
+import joptsimple.OptionSet;
+
+import java.io.File;
+
+import static java.lang.String.format;
 
 /**
  * String message dumper

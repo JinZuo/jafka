@@ -17,11 +17,11 @@
 
 package com.sohu.jafka.utils;
 
+import org.apache.log4j.Logger;
+
 import java.io.IOException;
 import java.net.Socket;
 import java.nio.channels.Selector;
-
-import org.apache.log4j.Logger;
 
 /**
  * an useful tools to close some streams or file descriptions

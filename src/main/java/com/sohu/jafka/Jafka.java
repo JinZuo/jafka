@@ -17,14 +17,14 @@
 
 package com.sohu.jafka;
 
-import java.io.Closeable;
-import java.util.Properties;
-
 import com.sohu.jafka.consumer.ConsumerConfig;
 import com.sohu.jafka.producer.ProducerConfig;
 import com.sohu.jafka.server.ServerConfig;
 import com.sohu.jafka.server.ServerStartable;
 import com.sohu.jafka.utils.Utils;
+
+import java.io.Closeable;
+import java.util.Properties;
 
 /**
  * Jafka Main point

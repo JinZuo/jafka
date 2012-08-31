@@ -17,12 +17,12 @@
 
 package com.sohu.jafka.network;
 
-import java.nio.ByteBuffer;
-
 import com.sohu.jafka.api.ICalculable;
 import com.sohu.jafka.api.RequestKeys;
 import com.sohu.jafka.common.annotations.ClientSide;
 import com.sohu.jafka.common.annotations.ServerSide;
+
+import java.nio.ByteBuffer;
 
 /**
  * Client-Server communication

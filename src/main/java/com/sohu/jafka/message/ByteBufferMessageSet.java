@@ -18,15 +18,15 @@
 package com.sohu.jafka.message;
 
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.channels.GatheringByteChannel;
-import java.util.Iterator;
-
 import com.sohu.jafka.common.ErrorMapping;
 import com.sohu.jafka.common.InvalidMessageSizeException;
 import com.sohu.jafka.common.MessageSizeTooLargeException;
 import com.sohu.jafka.utils.IteratorTemplate;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.GatheringByteChannel;
+import java.util.Iterator;
 
 /**
  * A sequence of messages stored in a byte buffer

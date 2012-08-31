@@ -17,13 +17,6 @@
 
 package com.sohu.jafka.consumer;
 
-import java.io.Closeable;
-import java.io.IOException;
-import java.util.List;
-
-import org.apache.log4j.Logger;
-import org.apache.zookeeper.Watcher.Event.KeeperState;
-
 import com.github.zkclient.IZkChildListener;
 import com.github.zkclient.IZkStateListener;
 import com.github.zkclient.ZkClient;
@@ -31,6 +24,12 @@ import com.sohu.jafka.common.ConsumerRebalanceFailedException;
 import com.sohu.jafka.server.ServerStartable;
 import com.sohu.jafka.utils.zookeeper.ZKStringSerializer;
 import com.sohu.jafka.utils.zookeeper.ZkUtils;
+import org.apache.log4j.Logger;
+import org.apache.zookeeper.Watcher.Event.KeeperState;
+
+import java.io.Closeable;
+import java.io.IOException;
+import java.util.List;
 
 /**
  * @author adyliu (imxylz@gmail.com)

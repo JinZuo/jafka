@@ -17,10 +17,10 @@
 
 package com.sohu.jafka.producer;
 
-import java.util.List;
-
 import com.sohu.jafka.cluster.Partition;
 import com.sohu.jafka.message.Message;
+
+import java.util.List;
 
 /**
  * message with topic and partition
@@ -49,19 +49,6 @@ public class ProducerPoolData<V> {
     public ProducerPoolData(String topic, Partition partition, List<V> data,byte magic) {
         this(topic,partition,data);
         this.magic = magic;
-    }
-
-    /**
-     * subclass could overwrite this method for producing different magicBytes for different magic value of message.jjjk
-     * @return
-     */
-    public byte[] createMagicBytes(){
-        switch (magic){
-            case Message.MAGIC_VERSION2:
-            case Message.MAGIC_VERSION_WITH_ID:
-                return null;
-        }
-        return null;
     }
 
 

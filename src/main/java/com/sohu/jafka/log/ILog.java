@@ -17,14 +17,14 @@
 
 package com.sohu.jafka.log;
 
+import com.sohu.jafka.api.OffsetRequest;
+import com.sohu.jafka.message.ByteBufferMessageSet;
+import com.sohu.jafka.message.MessageSet;
+
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
-
-import com.sohu.jafka.api.OffsetRequest;
-import com.sohu.jafka.message.ByteBufferMessageSet;
-import com.sohu.jafka.message.MessageSet;
 
 /**
  * log interface

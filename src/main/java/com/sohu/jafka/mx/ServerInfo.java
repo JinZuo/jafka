@@ -17,10 +17,10 @@
 
 package com.sohu.jafka.mx;
 
-import static java.lang.String.format;
-
 import java.text.SimpleDateFormat;
 import java.util.Date;
+
+import static java.lang.String.format;
 
 /**
  * Some thing about the Jafka server

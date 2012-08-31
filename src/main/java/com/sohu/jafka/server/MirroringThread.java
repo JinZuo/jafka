@@ -17,16 +17,15 @@
 
 package com.sohu.jafka.server;
 
-import java.io.Closeable;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-
-import org.apache.log4j.Logger;
-
 import com.sohu.jafka.consumer.MessageStream;
 import com.sohu.jafka.message.Message;
 import com.sohu.jafka.producer.Producer;
 import com.sohu.jafka.producer.ProducerData;
+import org.apache.log4j.Logger;
+
+import java.io.Closeable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author adyliu (imxylz@gmail.com)

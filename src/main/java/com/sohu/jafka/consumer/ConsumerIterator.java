@@ -17,20 +17,19 @@
 
 package com.sohu.jafka.consumer;
 
-import static java.lang.String.format;
+import com.sohu.jafka.common.ConsumerTimeoutException;
+import com.sohu.jafka.message.MessageAndOffset;
+import com.sohu.jafka.mx.ConsumerTopicStat;
+import com.sohu.jafka.producer.serializer.Decoder;
+import com.sohu.jafka.utils.IteratorTemplate;
+import org.apache.log4j.Logger;
 
 import java.util.Iterator;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.apache.log4j.Logger;
-
-import com.sohu.jafka.common.ConsumerTimeoutException;
-import com.sohu.jafka.message.MessageAndOffset;
-import com.sohu.jafka.mx.ConsumerTopicStat;
-import com.sohu.jafka.producer.serializer.Decoder;
-import com.sohu.jafka.utils.IteratorTemplate;
+import static java.lang.String.format;
 
 /**
  * @author adyliu (imxylz@gmail.com)

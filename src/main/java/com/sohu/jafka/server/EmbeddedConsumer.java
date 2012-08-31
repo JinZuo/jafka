@@ -17,14 +17,6 @@
 
 package com.sohu.jafka.server;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-
-import org.apache.log4j.Logger;
-
 import com.sohu.jafka.consumer.Consumer;
 import com.sohu.jafka.consumer.ConsumerConfig;
 import com.sohu.jafka.consumer.ConsumerConnector;
@@ -36,6 +28,13 @@ import com.sohu.jafka.producer.Producer;
 import com.sohu.jafka.producer.ProducerConfig;
 import com.sohu.jafka.producer.serializer.MessageEncoders;
 import com.sohu.jafka.utils.Closer;
+import org.apache.log4j.Logger;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author adyliu (imxylz@gmail.com)

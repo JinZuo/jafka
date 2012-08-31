@@ -17,14 +17,14 @@
 
 package com.sohu.jafka.log;
 
+import com.sohu.jafka.utils.Utils;
+
 import java.io.IOException;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
-
-import com.sohu.jafka.utils.Utils;
 
 /**
  * Rolling file every day

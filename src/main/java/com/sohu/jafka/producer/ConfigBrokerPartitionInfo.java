@@ -17,14 +17,14 @@
 
 package com.sohu.jafka.producer;
 
+import com.sohu.jafka.cluster.Broker;
+import com.sohu.jafka.cluster.Partition;
+import com.sohu.jafka.common.annotations.ClientSide;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
-
-import com.sohu.jafka.cluster.Broker;
-import com.sohu.jafka.cluster.Partition;
-import com.sohu.jafka.common.annotations.ClientSide;
 
 /**
  * send messages with given brokers list

@@ -17,13 +17,13 @@
 
 package com.sohu.jafka.api;
 
-import java.nio.ByteBuffer;
-import java.util.List;
-
 import com.sohu.jafka.common.annotations.ClientSide;
 import com.sohu.jafka.common.annotations.ServerSide;
 import com.sohu.jafka.network.Request;
 import com.sohu.jafka.utils.Utils;
+
+import java.nio.ByteBuffer;
+import java.util.List;
 
 /**
  * offset request

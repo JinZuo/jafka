@@ -17,24 +17,27 @@
 
 package com.sohu.jafka.network.handlers;
 
-import static java.lang.String.format;
-
 import com.sohu.jafka.api.ProducerRequest;
 import com.sohu.jafka.api.RequestKeys;
 import com.sohu.jafka.log.ILog;
 import com.sohu.jafka.log.LogManager;
-import com.sohu.jafka.message.*;
+import com.sohu.jafka.message.ByteBufferMessageSet;
+import com.sohu.jafka.message.CompressionCodec;
+import com.sohu.jafka.message.CompressionUtils;
+import com.sohu.jafka.message.Message;
+import com.sohu.jafka.message.MessageAndOffset;
+import com.sohu.jafka.message.MessageIdCenter;
 import com.sohu.jafka.mx.BrokerTopicStat;
 import com.sohu.jafka.network.Receive;
 import com.sohu.jafka.network.Send;
 import com.sohu.jafka.server.Server;
-import com.sohu.jafka.utils.Utils;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+
+import static java.lang.String.format;
 
 /**
  * handler for producer request
@@ -103,6 +106,7 @@ public class ProducerHandler extends AbstractHandler {
     /**
      * process the messages in request before they are written to disk.
      * @param request
+     * @author rockybean
      */
     private void preProcessRequestByMessageMagicValue(ProducerRequest request,int partition) {
         //get id of this broker
@@ -127,7 +131,10 @@ public class ProducerHandler extends AbstractHandler {
             switch(magic){
                 case Message.MAGIC_VERSION2:
                 case Message.MAGIC_VERSION_WITH_ID:
+                //case Message.NEW_VERSION...
+                    //generate a messageId for the message
                     long msgId = MessageIdCenter.generateId(partition);
+                    //get the data bytes in the message
                     ByteBuffer buffer = msg.payload();
                     byte[] bytes = new byte[buffer.remaining()];
                     buffer.get(bytes);

@@ -18,12 +18,12 @@
 package com.sohu.jafka.producer.async;
 
 
+import com.sohu.jafka.producer.SyncProducer;
+import com.sohu.jafka.producer.serializer.Encoder;
+
 import java.io.Closeable;
 import java.util.List;
 import java.util.Properties;
-
-import com.sohu.jafka.producer.SyncProducer;
-import com.sohu.jafka.producer.serializer.Encoder;
 
 /**
  * Handler that dispatches the batched data from the queue of the

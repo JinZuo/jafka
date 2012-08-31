@@ -17,11 +17,11 @@
 
 package com.sohu.jafka.console;
 
+import com.sohu.jafka.message.Message;
+
 import java.io.PrintStream;
 import java.nio.ByteBuffer;
 import java.util.Properties;
-
-import com.sohu.jafka.message.Message;
 
 /**
  * @author adyliu (imxylz@gmail.com)

@@ -17,17 +17,16 @@
 
 package com.sohu.jafka.console;
 
-import static java.lang.String.format;
-
-import java.io.IOException;
-import java.util.Arrays;
-
+import com.sohu.jafka.admin.AdminOperation;
 import joptsimple.ArgumentAcceptingOptionSpec;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 import joptsimple.OptionSpec;
 
-import com.sohu.jafka.admin.AdminOperation;
+import java.io.IOException;
+import java.util.Arrays;
+
+import static java.lang.String.format;
 
 /**
  * @author adyliu (imxylz@gmail.com)

@@ -17,9 +17,9 @@
 
 package com.sohu.jafka.mx;
 
-import java.util.concurrent.BlockingQueue;
-
 import com.sohu.jafka.producer.async.QueueItem;
+
+import java.util.concurrent.BlockingQueue;
 
 /**
  * @author adyliu (imxylz@gmail.com)

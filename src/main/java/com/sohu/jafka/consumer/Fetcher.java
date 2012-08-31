@@ -17,18 +17,17 @@
 
 package com.sohu.jafka.consumer;
 
+import com.github.zkclient.ZkClient;
+import com.sohu.jafka.cluster.Cluster;
+import com.sohu.jafka.common.annotations.ClientSide;
+import org.apache.log4j.Logger;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
-
-import org.apache.log4j.Logger;
-
-import com.github.zkclient.ZkClient;
-import com.sohu.jafka.cluster.Cluster;
-import com.sohu.jafka.common.annotations.ClientSide;
 
 
 

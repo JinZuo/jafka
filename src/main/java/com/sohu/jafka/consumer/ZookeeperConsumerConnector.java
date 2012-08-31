@@ -17,7 +17,27 @@
 
 package com.sohu.jafka.consumer;
 
-import static java.lang.String.format;
+import com.github.zkclient.IZkChildListener;
+import com.github.zkclient.IZkStateListener;
+import com.github.zkclient.ZkClient;
+import com.github.zkclient.exception.ZkNodeExistsException;
+import com.sohu.jafka.api.OffsetRequest;
+import com.sohu.jafka.cluster.Broker;
+import com.sohu.jafka.cluster.Cluster;
+import com.sohu.jafka.cluster.Partition;
+import com.sohu.jafka.common.ConsumerRebalanceFailedException;
+import com.sohu.jafka.common.InvalidConfigException;
+import com.sohu.jafka.producer.serializer.Decoder;
+import com.sohu.jafka.utils.Closer;
+import com.sohu.jafka.utils.KV.StringTuple;
+import com.sohu.jafka.utils.Pool;
+import com.sohu.jafka.utils.Scheduler;
+import com.sohu.jafka.utils.zookeeper.ZKStringSerializer;
+import com.sohu.jafka.utils.zookeeper.ZkGroupDirs;
+import com.sohu.jafka.utils.zookeeper.ZkGroupTopicDirs;
+import com.sohu.jafka.utils.zookeeper.ZkUtils;
+import org.apache.log4j.Logger;
+import org.apache.zookeeper.Watcher.Event.KeeperState;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -40,28 +60,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
-import org.apache.log4j.Logger;
-import org.apache.zookeeper.Watcher.Event.KeeperState;
-
-import com.github.zkclient.IZkChildListener;
-import com.github.zkclient.IZkStateListener;
-import com.github.zkclient.ZkClient;
-import com.github.zkclient.exception.ZkNodeExistsException;
-import com.sohu.jafka.api.OffsetRequest;
-import com.sohu.jafka.cluster.Broker;
-import com.sohu.jafka.cluster.Cluster;
-import com.sohu.jafka.cluster.Partition;
-import com.sohu.jafka.common.ConsumerRebalanceFailedException;
-import com.sohu.jafka.common.InvalidConfigException;
-import com.sohu.jafka.producer.serializer.Decoder;
-import com.sohu.jafka.utils.Closer;
-import com.sohu.jafka.utils.KV.StringTuple;
-import com.sohu.jafka.utils.Pool;
-import com.sohu.jafka.utils.Scheduler;
-import com.sohu.jafka.utils.zookeeper.ZKStringSerializer;
-import com.sohu.jafka.utils.zookeeper.ZkGroupDirs;
-import com.sohu.jafka.utils.zookeeper.ZkGroupTopicDirs;
-import com.sohu.jafka.utils.zookeeper.ZkUtils;
+import static java.lang.String.format;
 
 /**
  * This class handles the consumers interaction with zookeeper

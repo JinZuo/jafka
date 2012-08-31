@@ -17,13 +17,13 @@
 
 package com.sohu.jafka.api;
 
+import com.sohu.jafka.common.ErrorMapping;
+import com.sohu.jafka.message.ByteBufferMessageSet;
+
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-
-import com.sohu.jafka.common.ErrorMapping;
-import com.sohu.jafka.message.ByteBufferMessageSet;
 
 /**
  * a response with mulit-data

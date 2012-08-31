@@ -17,11 +17,11 @@
 
 package com.sohu.jafka.message.compress;
 
-import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
-
 import com.sohu.jafka.common.UnKnownCodecException;
 import com.sohu.jafka.message.CompressionCodec;
+
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
 
 
 /**

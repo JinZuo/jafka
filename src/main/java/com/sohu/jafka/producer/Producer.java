@@ -18,19 +18,6 @@
 package com.sohu.jafka.producer;
 
 
-import static com.sohu.jafka.utils.Closer.closeQuietly;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Random;
-import java.util.SortedSet;
-import java.util.concurrent.atomic.AtomicBoolean;
-
-import org.apache.log4j.Logger;
-
 import com.sohu.jafka.api.ProducerRequest;
 import com.sohu.jafka.cluster.Broker;
 import com.sohu.jafka.cluster.Partition;
@@ -43,6 +30,18 @@ import com.sohu.jafka.producer.async.EventHandler;
 import com.sohu.jafka.producer.serializer.Encoder;
 import com.sohu.jafka.utils.Utils;
 import com.sohu.jafka.utils.ZKConfig;
+import org.apache.log4j.Logger;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Random;
+import java.util.SortedSet;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import static com.sohu.jafka.utils.Closer.closeQuietly;
 
 /**
  * Message producer

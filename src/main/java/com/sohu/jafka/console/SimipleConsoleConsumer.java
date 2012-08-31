@@ -17,20 +17,19 @@
 
 package com.sohu.jafka.console;
 
-import java.io.IOException;
-import java.net.URI;
-
-import joptsimple.ArgumentAcceptingOptionSpec;
-import joptsimple.OptionParser;
-import joptsimple.OptionSet;
-import joptsimple.OptionSpec;
-
 import com.sohu.jafka.api.FetchRequest;
 import com.sohu.jafka.consumer.SimpleConsumer;
 import com.sohu.jafka.message.ByteBufferMessageSet;
 import com.sohu.jafka.message.MessageAndOffset;
 import com.sohu.jafka.utils.Closer;
 import com.sohu.jafka.utils.Utils;
+import joptsimple.ArgumentAcceptingOptionSpec;
+import joptsimple.OptionParser;
+import joptsimple.OptionSet;
+import joptsimple.OptionSpec;
+
+import java.io.IOException;
+import java.net.URI;
 
 /**
  * @author adyliu (imxylz@gmail.com)

@@ -17,20 +17,19 @@
 
 package com.sohu.jafka.server;
 
-import java.io.Closeable;
-import java.io.File;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicBoolean;
-
 import com.sohu.jafka.log.LogManager;
-import org.apache.log4j.Logger;
-
 import com.sohu.jafka.mx.ServerInfo;
 import com.sohu.jafka.mx.SocketServerStats;
 import com.sohu.jafka.network.SocketServer;
 import com.sohu.jafka.utils.Mx4jLoader;
 import com.sohu.jafka.utils.Scheduler;
 import com.sohu.jafka.utils.Utils;
+import org.apache.log4j.Logger;
+
+import java.io.Closeable;
+import java.io.File;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * The main server container

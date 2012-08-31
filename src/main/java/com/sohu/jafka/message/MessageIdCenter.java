@@ -2,7 +2,6 @@ package com.sohu.jafka.message;
 
 import org.apache.log4j.Logger;
 
-import static com.sohu.jafka.message.MessageId.*;
 
 /**
  * To generate message id
@@ -27,7 +26,7 @@ public class MessageIdCenter {
                 throw new RuntimeException("Clock move backwards!Refused to generate id,please check your system config!");
             }
             if(timestamp == lastTimestamp){
-                sequenceNum = (sequenceNum + 1) & SEQUENCE_MASK;
+                sequenceNum = (sequenceNum + 1) & MessageId.SEQUENCE_MASK;
                 if(sequenceNum == 0){
                     timestamp = getNextMilli();
                 }
@@ -40,16 +39,11 @@ public class MessageIdCenter {
                 logger.debug(String.format("Generate new message id using {timestamp,partition,sequence} => {%d,%d,%d}",timestamp,partitionId,sequenceNum));
             }
 
-            return timestamp << TIMESTAMP_SHIFT|
-                    partitionId << PARTITIONID_SHIFT |
+            return timestamp << MessageId.TIMESTAMP_SHIFT|
+                    partitionId << MessageId.PARTITIONID_SHIFT |
                     sequenceNum;
     }
 
-    public static long generateId(long time, int partition, int seq) {
-        return time << TIMESTAMP_SHIFT|
-                partition << PARTITIONID_SHIFT|
-                seq << SEQUENCE_SHIFT;
-    }
     private static long getNextMilli() {
         if(logger.isDebugEnabled()){
             logger.debug("wait until next millisecond comes!");

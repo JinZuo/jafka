@@ -17,9 +17,10 @@
 
 package com.sohu.jafka.utils;
 
-import static com.sohu.jafka.utils.Utils.*;
-
 import java.util.Properties;
+
+import static com.sohu.jafka.utils.Utils.getInt;
+import static com.sohu.jafka.utils.Utils.getString;
 
 
 /**

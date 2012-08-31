@@ -17,7 +17,10 @@
 
 package com.sohu.jafka.network;
 
-import static java.lang.String.format;
+import com.sohu.jafka.api.RequestKeys;
+import com.sohu.jafka.mx.SocketServerStats;
+import com.sohu.jafka.utils.Closer;
+import org.apache.log4j.Logger;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -30,11 +33,7 @@ import java.util.Iterator;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
-import org.apache.log4j.Logger;
-
-import com.sohu.jafka.api.RequestKeys;
-import com.sohu.jafka.mx.SocketServerStats;
-import com.sohu.jafka.utils.Closer;
+import static java.lang.String.format;
 
 /**
  * Thread that processes all requests from a single connection. There are N

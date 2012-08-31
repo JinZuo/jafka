@@ -17,16 +17,22 @@
 
 package com.sohu.jafka.server;
 
-import static com.sohu.jafka.utils.Utils.*;
-
-import java.util.Map;
-import java.util.Properties;
-
 import com.sohu.jafka.log.FixedSizeRollingStrategy;
 import com.sohu.jafka.log.RollingStrategy;
 import com.sohu.jafka.message.Message;
 import com.sohu.jafka.utils.Utils;
 import com.sohu.jafka.utils.ZKConfig;
+
+import java.util.Map;
+import java.util.Properties;
+
+import static com.sohu.jafka.utils.Utils.getBoolean;
+import static com.sohu.jafka.utils.Utils.getInt;
+import static com.sohu.jafka.utils.Utils.getIntInRange;
+import static com.sohu.jafka.utils.Utils.getString;
+import static com.sohu.jafka.utils.Utils.getTopicFlushIntervals;
+import static com.sohu.jafka.utils.Utils.getTopicPartitions;
+import static com.sohu.jafka.utils.Utils.getTopicRentionHours;
 
 /**
  * Configuration for the jafka server

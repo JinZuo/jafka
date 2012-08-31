@@ -18,9 +18,9 @@
 package com.sohu.jafka.producer;
 
 
-import java.util.Random;
-
 import com.sohu.jafka.common.annotations.ClientSide;
+
+import java.util.Random;
 
 /**
  * @author adyliu (imxylz@gmail.com)

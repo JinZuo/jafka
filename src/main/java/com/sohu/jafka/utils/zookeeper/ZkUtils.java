@@ -18,6 +18,13 @@
 package com.sohu.jafka.utils.zookeeper;
 
 
+import com.github.zkclient.ZkClient;
+import com.github.zkclient.exception.ZkNoNodeException;
+import com.github.zkclient.exception.ZkNodeExistsException;
+import com.sohu.jafka.cluster.Broker;
+import com.sohu.jafka.cluster.Cluster;
+import com.sohu.jafka.consumer.TopicCount;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -25,14 +32,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-
-import com.github.zkclient.ZkClient;
-import com.github.zkclient.exception.ZkNoNodeException;
-import com.github.zkclient.exception.ZkNodeExistsException;
-import com.sohu.jafka.cluster.Broker;
-import com.sohu.jafka.cluster.Cluster;
-import com.sohu.jafka.consumer.TopicCount;
 
 /**
  * @author adyliu (imxylz@gmail.com)

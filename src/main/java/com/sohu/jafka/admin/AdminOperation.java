@@ -17,8 +17,6 @@
 
 package com.sohu.jafka.admin;
 
-import java.io.IOException;
-
 import com.sohu.jafka.api.CreaterRequest;
 import com.sohu.jafka.api.DeleterRequest;
 import com.sohu.jafka.common.ErrorMapping;
@@ -26,6 +24,8 @@ import com.sohu.jafka.consumer.SimpleOperation;
 import com.sohu.jafka.network.Receive;
 import com.sohu.jafka.utils.KV;
 import com.sohu.jafka.utils.Utils;
+
+import java.io.IOException;
 
 /**
  * Some useful tools for server operation

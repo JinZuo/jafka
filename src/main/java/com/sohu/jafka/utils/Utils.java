@@ -17,6 +17,10 @@
 
 package com.sohu.jafka.utils;
 
+import com.sohu.jafka.mx.IMBeanName;
+
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
 import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
@@ -37,12 +41,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.zip.CRC32;
-
-import javax.management.MBeanServer;
-import javax.management.ObjectName;
-
-import com.sohu.jafka.message.Message;
-import com.sohu.jafka.mx.IMBeanName;
 
 /**
  * common utilities

@@ -18,13 +18,13 @@
 package com.sohu.jafka.message;
 
 
+import com.sohu.jafka.message.compress.CompressionFacade;
+import com.sohu.jafka.message.compress.CompressionFactory;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
-
-import com.sohu.jafka.message.compress.CompressionFacade;
-import com.sohu.jafka.message.compress.CompressionFactory;
 
 /**
  * @author adyliu (imxylz@gmail.com)

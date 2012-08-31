@@ -17,12 +17,12 @@
 
 package com.sohu.jafka.network;
 
+import com.sohu.jafka.common.ErrorMapping;
+import com.sohu.jafka.utils.Utils;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.GatheringByteChannel;
-
-import com.sohu.jafka.common.ErrorMapping;
-import com.sohu.jafka.utils.Utils;
 
 /**
  * @author adyliu (imxylz@gmail.com)

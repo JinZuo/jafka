@@ -17,9 +17,6 @@
 
 package com.sohu.jafka.network.handlers;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.sohu.jafka.api.FetchRequest;
 import com.sohu.jafka.api.MultiFetchRequest;
 import com.sohu.jafka.api.RequestKeys;
@@ -28,6 +25,9 @@ import com.sohu.jafka.network.MessageSetSend;
 import com.sohu.jafka.network.MultiMessageSetSend;
 import com.sohu.jafka.network.Receive;
 import com.sohu.jafka.network.Send;
+
+import java.util.ArrayList;
+import java.util.List;
 /**
  * handler for multi fetch request
  * 

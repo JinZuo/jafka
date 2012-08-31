@@ -17,8 +17,6 @@
 
 package com.sohu.jafka.producer;
 
-import com.sohu.jafka.message.Message;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -39,8 +37,6 @@ public class ProducerData<K, V> {
     /** variable length data to be published as Jafka messages under topic */
     private List<V> data;
 
-    /*the using message version of this data*/
-    private byte version = Message.MAGIC_VERSION2;
 
     public ProducerData(String topic, K key, List<V> data) {
         super();
@@ -56,21 +52,6 @@ public class ProducerData<K, V> {
     public ProducerData(String topic, V data) {
         this.topic = topic;
         getData().add(data);
-    }
-
-    public ProducerData(String topic,K key, List<V> data,byte version){
-        this(topic,key,data);
-        this.version = version;
-    }
-
-    public ProducerData(String topic, List<V> data,byte version){
-        this(topic,null,data,version);
-    }
-
-    public ProducerData(String topic,V data,byte version){
-        this.topic = topic;
-        getData().add(data);
-        this.version = version;
     }
 
     public String getTopic() {
@@ -99,7 +80,4 @@ public class ProducerData<K, V> {
     public void setData(List<V> data) {
         this.data = data;
     }
-
-
-
 }

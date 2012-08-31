@@ -18,15 +18,6 @@
 package com.sohu.jafka.producer.async;
 
 
-import java.io.Closeable;
-import java.util.Properties;
-import java.util.Random;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-
-import org.apache.log4j.Logger;
-
 import com.sohu.jafka.api.ProducerRequest;
 import com.sohu.jafka.common.AsyncProducerInterruptedException;
 import com.sohu.jafka.common.QueueClosedException;
@@ -37,6 +28,14 @@ import com.sohu.jafka.producer.ProducerConfig;
 import com.sohu.jafka.producer.SyncProducer;
 import com.sohu.jafka.producer.serializer.Encoder;
 import com.sohu.jafka.utils.Utils;
+import org.apache.log4j.Logger;
+
+import java.io.Closeable;
+import java.util.Properties;
+import java.util.Random;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author adyliu (imxylz@gmail.com)

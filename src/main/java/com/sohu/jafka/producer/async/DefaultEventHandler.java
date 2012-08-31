@@ -17,16 +17,6 @@
 
 package com.sohu.jafka.producer.async;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
-
-import org.apache.log4j.Logger;
-
 import com.sohu.jafka.api.ProducerRequest;
 import com.sohu.jafka.message.ByteBufferMessageSet;
 import com.sohu.jafka.message.CompressionCodec;
@@ -34,6 +24,15 @@ import com.sohu.jafka.message.Message;
 import com.sohu.jafka.producer.ProducerConfig;
 import com.sohu.jafka.producer.SyncProducer;
 import com.sohu.jafka.producer.serializer.Encoder;
+import org.apache.log4j.Logger;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
 
 /**
  * @author adyliu (imxylz@gmail.com)

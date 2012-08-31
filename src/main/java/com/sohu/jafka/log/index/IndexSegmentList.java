@@ -56,7 +56,6 @@ public class IndexSegmentList {
         return null;
     }
 
-    //todo:alfred:complete this method
     public List<LogIndexSegment> trunc(int count) {
         if(count < 0){
             throw new IllegalStateException("trunc count must be positive!");

@@ -17,9 +17,9 @@
 
 package com.sohu.jafka.mx;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
 import com.sohu.jafka.utils.Utils;
+
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author adyliu (imxylz@gmail.com)

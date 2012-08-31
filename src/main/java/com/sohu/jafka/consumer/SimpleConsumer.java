@@ -17,10 +17,6 @@
 
 package com.sohu.jafka.consumer;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
 import com.sohu.jafka.api.FetchRequest;
 import com.sohu.jafka.api.MultiFetchRequest;
 import com.sohu.jafka.api.MultiFetchResponse;
@@ -32,6 +28,10 @@ import com.sohu.jafka.message.ByteBufferMessageSet;
 import com.sohu.jafka.message.Message;
 import com.sohu.jafka.network.Receive;
 import com.sohu.jafka.utils.KV;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Simple message consumer

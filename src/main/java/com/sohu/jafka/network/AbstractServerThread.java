@@ -18,15 +18,14 @@
 package com.sohu.jafka.network;
 
 
+import com.sohu.jafka.utils.Closer;
+import org.apache.log4j.Logger;
+
 import java.io.Closeable;
 import java.io.IOException;
 import java.nio.channels.Selector;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import org.apache.log4j.Logger;
-
-import com.sohu.jafka.utils.Closer;
 
 /**
  * @author adyliu (imxylz@gmail.com)

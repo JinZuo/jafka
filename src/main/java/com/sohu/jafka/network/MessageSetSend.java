@@ -18,12 +18,12 @@
 package com.sohu.jafka.network;
 
 
+import com.sohu.jafka.common.ErrorMapping;
+import com.sohu.jafka.message.MessageSet;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.GatheringByteChannel;
-
-import com.sohu.jafka.common.ErrorMapping;
-import com.sohu.jafka.message.MessageSet;
 
 /**
  * A zero-copy message response that writes the bytes needed directly from

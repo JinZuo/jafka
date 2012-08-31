@@ -17,10 +17,10 @@
 
 package com.sohu.jafka.mx;
 
-import java.util.concurrent.atomic.AtomicLong;
-
 import com.sohu.jafka.utils.Pool;
 import com.sohu.jafka.utils.Utils;
+
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author adyliu (imxylz@gmail.com)

@@ -17,14 +17,14 @@
 
 package com.sohu.jafka.consumer;
 
-import java.io.Closeable;
-import java.io.IOException;
-import java.util.List;
-
 import com.sohu.jafka.api.FetchRequest;
 import com.sohu.jafka.api.MultiFetchResponse;
 import com.sohu.jafka.api.OffsetRequest;
 import com.sohu.jafka.message.ByteBufferMessageSet;
+
+import java.io.Closeable;
+import java.io.IOException;
+import java.util.List;
 
 /**
  * Consumer Interface

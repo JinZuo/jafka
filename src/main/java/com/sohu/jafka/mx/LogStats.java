@@ -17,11 +17,11 @@
 
 package com.sohu.jafka.mx;
 
+import com.sohu.jafka.log.Log;
+
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.concurrent.atomic.AtomicLong;
-
-import com.sohu.jafka.log.Log;
 
 /**
  * @author adyliu (imxylz@gmail.com)

@@ -18,12 +18,12 @@
 package com.sohu.jafka.message.compress;
 
 
+import com.sohu.jafka.utils.Closer;
+
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-
-import com.sohu.jafka.utils.Closer;
 
 /**
  * message compression

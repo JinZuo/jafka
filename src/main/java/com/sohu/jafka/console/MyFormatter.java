@@ -1,11 +1,11 @@
 package com.sohu.jafka.console;
 
+import joptsimple.HelpFormatter;
+import joptsimple.OptionDescriptor;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-
-import joptsimple.HelpFormatter;
-import joptsimple.OptionDescriptor;
 
 public class MyFormatter implements HelpFormatter {
         public String format( Map<String, ? extends OptionDescriptor> options ) {

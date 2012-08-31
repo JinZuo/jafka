@@ -17,18 +17,6 @@
 
 package com.sohu.jafka.producer;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.SortedSet;
-import java.util.TreeSet;
-
-import org.apache.log4j.Logger;
-import org.apache.zookeeper.Watcher.Event.KeeperState;
-
 import com.github.zkclient.IZkChildListener;
 import com.github.zkclient.IZkStateListener;
 import com.github.zkclient.ZkClient;
@@ -38,6 +26,17 @@ import com.sohu.jafka.common.NoBrokersForPartitionException;
 import com.sohu.jafka.utils.ZKConfig;
 import com.sohu.jafka.utils.zookeeper.ZKStringSerializer;
 import com.sohu.jafka.utils.zookeeper.ZkUtils;
+import org.apache.log4j.Logger;
+import org.apache.zookeeper.Watcher.Event.KeeperState;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 /**
  * @author adyliu (imxylz@gmail.com)

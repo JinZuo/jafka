@@ -18,13 +18,13 @@
 package com.sohu.jafka.network;
 
 
+import com.sohu.jafka.api.OffsetRequest;
+import com.sohu.jafka.common.ErrorMapping;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.GatheringByteChannel;
 import java.util.List;
-
-import com.sohu.jafka.api.OffsetRequest;
-import com.sohu.jafka.common.ErrorMapping;
 
 
 /**

@@ -17,17 +17,6 @@
 
 package com.sohu.jafka.producer;
 
-import java.io.Closeable;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-
-import org.apache.log4j.Logger;
-
 import com.sohu.jafka.api.ProducerRequest;
 import com.sohu.jafka.cluster.Broker;
 import com.sohu.jafka.cluster.Partition;
@@ -43,6 +32,16 @@ import com.sohu.jafka.producer.async.DefaultEventHandler;
 import com.sohu.jafka.producer.async.EventHandler;
 import com.sohu.jafka.producer.serializer.Encoder;
 import com.sohu.jafka.utils.Utils;
+import org.apache.log4j.Logger;
+
+import java.io.Closeable;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author adyliu (imxylz@gmail.com)

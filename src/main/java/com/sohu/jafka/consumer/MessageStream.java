@@ -18,11 +18,11 @@
 package com.sohu.jafka.consumer;
 
 
-import java.util.Iterator;
-import java.util.concurrent.BlockingQueue;
-
 import com.sohu.jafka.common.annotations.ClientSide;
 import com.sohu.jafka.producer.serializer.Decoder;
+
+import java.util.Iterator;
+import java.util.concurrent.BlockingQueue;
 
 /**
  * @author adyliu (imxylz@gmail.com)

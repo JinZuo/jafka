@@ -17,7 +17,15 @@
 
 package com.sohu.jafka.producer;
 
-import static java.lang.String.format;
+import com.sohu.jafka.api.MultiProducerRequest;
+import com.sohu.jafka.api.ProducerRequest;
+import com.sohu.jafka.common.annotations.ThreadSafe;
+import com.sohu.jafka.message.ByteBufferMessageSet;
+import com.sohu.jafka.mx.SyncProducerStats;
+import com.sohu.jafka.network.BoundedByteBufferSend;
+import com.sohu.jafka.network.Request;
+import com.sohu.jafka.utils.Closer;
+import org.apache.log4j.Logger;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -27,16 +35,7 @@ import java.nio.channels.SocketChannel;
 import java.util.List;
 import java.util.Random;
 
-import org.apache.log4j.Logger;
-
-import com.sohu.jafka.api.MultiProducerRequest;
-import com.sohu.jafka.api.ProducerRequest;
-import com.sohu.jafka.common.annotations.ThreadSafe;
-import com.sohu.jafka.message.ByteBufferMessageSet;
-import com.sohu.jafka.mx.SyncProducerStats;
-import com.sohu.jafka.network.BoundedByteBufferSend;
-import com.sohu.jafka.network.Request;
-import com.sohu.jafka.utils.Closer;
+import static java.lang.String.format;
 
 /**
  * file{producer/SyncProducer.scala}

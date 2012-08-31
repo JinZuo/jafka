@@ -17,15 +17,14 @@
 
 package com.sohu.jafka.console;
 
-import java.io.IOException;
-import java.net.URI;
-
 import com.sohu.jafka.consumer.SimpleConsumer;
-
 import joptsimple.ArgumentAcceptingOptionSpec;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 import joptsimple.OptionSpec;
+
+import java.io.IOException;
+import java.net.URI;
 
 /**
  * @author adyliu (imxylz@gmail.com)

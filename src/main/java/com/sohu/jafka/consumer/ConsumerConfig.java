@@ -17,11 +17,11 @@
 
 package com.sohu.jafka.consumer;
 
-import java.util.Properties;
-
 import com.sohu.jafka.api.OffsetRequest;
 import com.sohu.jafka.utils.Utils;
 import com.sohu.jafka.utils.ZKConfig;
+
+import java.util.Properties;
 
 /**
  * the consumer configuration

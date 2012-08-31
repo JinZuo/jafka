@@ -17,17 +17,6 @@
 
 package com.sohu.jafka.console;
 
-import java.io.IOException;
-import java.util.Properties;
-import java.util.Random;
-
-import joptsimple.ArgumentAcceptingOptionSpec;
-import joptsimple.OptionException;
-import joptsimple.OptionParser;
-import joptsimple.OptionSet;
-import joptsimple.OptionSpec;
-import joptsimple.OptionSpecBuilder;
-
 import com.github.zkclient.ZkClient;
 import com.github.zkclient.exception.ZkInterruptedException;
 import com.sohu.jafka.consumer.Consumer;
@@ -39,6 +28,16 @@ import com.sohu.jafka.producer.serializer.MessageEncoders;
 import com.sohu.jafka.utils.Closer;
 import com.sohu.jafka.utils.ImmutableMap;
 import com.sohu.jafka.utils.zookeeper.ZKStringSerializer;
+import joptsimple.ArgumentAcceptingOptionSpec;
+import joptsimple.OptionException;
+import joptsimple.OptionParser;
+import joptsimple.OptionSet;
+import joptsimple.OptionSpec;
+import joptsimple.OptionSpecBuilder;
+
+import java.io.IOException;
+import java.util.Properties;
+import java.util.Random;
 
 /**
  * @author adyliu (imxylz@gmail.com)

@@ -18,12 +18,12 @@
 package com.sohu.jafka.consumer;
 
 
+import com.sohu.jafka.producer.serializer.Decoder;
+
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-
-import com.sohu.jafka.producer.serializer.Decoder;
 
 /**
  * Main interface for consumer

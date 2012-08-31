@@ -17,9 +17,6 @@
 
 package com.sohu.jafka.producer;
 
-import java.util.List;
-import java.util.Properties;
-
 import com.sohu.jafka.common.InvalidConfigException;
 import com.sohu.jafka.common.annotations.ClientSide;
 import com.sohu.jafka.message.CompressionCodec;
@@ -27,6 +24,9 @@ import com.sohu.jafka.producer.async.AsyncProducerConfig;
 import com.sohu.jafka.producer.async.AsyncProducerConfigShared;
 import com.sohu.jafka.utils.Utils;
 import com.sohu.jafka.utils.ZKConfig;
+
+import java.util.List;
+import java.util.Properties;
 
 /**
  * Configuration for producer

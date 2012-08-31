@@ -17,12 +17,11 @@
 
 package com.sohu.jafka.server;
 
-import java.io.Closeable;
-
-import org.apache.log4j.Logger;
-
 import com.sohu.jafka.consumer.ConsumerConfig;
 import com.sohu.jafka.producer.ProducerConfig;
+import org.apache.log4j.Logger;
+
+import java.io.Closeable;
 
 
 

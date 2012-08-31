@@ -17,9 +17,9 @@
 
 package com.sohu.jafka.common;
 
-import java.nio.ByteBuffer;
-
 import com.sohu.jafka.message.InvalidMessageException;
+
+import java.nio.ByteBuffer;
 
 
 /**

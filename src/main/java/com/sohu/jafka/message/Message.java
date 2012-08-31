@@ -17,14 +17,13 @@
 
 package com.sohu.jafka.message;
 
-import static java.lang.String.format;
+import com.sohu.jafka.api.ICalculable;
+import com.sohu.jafka.common.UnknownMagicByteException;
+import com.sohu.jafka.utils.Utils;
 
 import java.nio.ByteBuffer;
 
-import com.sohu.jafka.api.ICalculable;
-import com.sohu.jafka.common.UnknownMagicByteException;
-import com.sohu.jafka.server.Server;
-import com.sohu.jafka.utils.Utils;
+import static java.lang.String.format;
 
 /**
  * * A message. The format of an N byte message is the following:
@@ -73,8 +72,8 @@ public class Message implements ICalculable {
     /* message id in MAGIC_VERSION_WITH_ID*/
     public static final byte MESSAGE_ID_OFFSET = BROKER_ID_OFFSET + BROKER_ID_LENGTH;
     public static final byte MESSAGE_ID_LENGTH = 8;
-    public static final int MAGIC_VERSION_WITH_ID_MAGIC_LENGTH = BROKER_ID_LENGTH + MESSAGE_ID_LENGTH;
 
+    /*the 4 bytes denoting the length of data*/
     public static final int MESSAGE_DATA_LENGTH = 4;
 
     /**
@@ -156,9 +155,6 @@ public class Message implements ICalculable {
     }
     public Message(int brokerId,long msgId,long checksum,byte[] bytes,CompressionCodec compressionCodec){
         this(ByteBuffer.allocate(headerSize(CurrentMagicValue)+bytes.length));
-        /*if(CurrentMagicValue < MAGIC_VERSION_WITH_ID) {
-            throw new IllegalStateException("Current message version is too old to use this constructor!");
-        }*/
         buffer.put(CurrentMagicValue);
         byte attr = 0;
         if(compressionCodec.codec > 0){
@@ -176,20 +172,6 @@ public class Message implements ICalculable {
         }
         buffer.put(bytes);
         buffer.rewind();
-    }
-
-    /**
-     * new message version should add its extra data after current version.
-     * You should reallocate buffer.
-     * todo:complete this method
-     * @param buffer
-     * @return
-     */
-    public ByteBuffer appendExtraData(ByteBuffer buffer,byte[] bytes) {
-        /*if(bytes != null || bytes.length > 0){
-
-        }*/
-        return buffer;
     }
 
     /**

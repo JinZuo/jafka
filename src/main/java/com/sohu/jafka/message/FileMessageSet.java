@@ -17,6 +17,11 @@
 
 package com.sohu.jafka.message;
 
+import com.sohu.jafka.mx.LogFlushStats;
+import com.sohu.jafka.utils.IteratorTemplate;
+import com.sohu.jafka.utils.Utils;
+import org.apache.log4j.Logger;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -25,12 +30,6 @@ import java.nio.channels.GatheringByteChannel;
 import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
-
-import org.apache.log4j.Logger;
-
-import com.sohu.jafka.mx.LogFlushStats;
-import com.sohu.jafka.utils.IteratorTemplate;
-import com.sohu.jafka.utils.Utils;
 
 /**
  * An on-disk message set. The set can be opened either mutably or immutably. Mutation attempts

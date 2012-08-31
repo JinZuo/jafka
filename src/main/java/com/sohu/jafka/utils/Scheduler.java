@@ -17,13 +17,13 @@
 
 package com.sohu.jafka.utils;
 
+import org.apache.log4j.Logger;
+
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
-
-import org.apache.log4j.Logger;
 
 /**
  * A scheduler for running jobs in the background

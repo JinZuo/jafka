@@ -17,10 +17,10 @@
 
 package com.sohu.jafka.producer.serializer;
 
-import java.nio.ByteBuffer;
-
 import com.sohu.jafka.message.Message;
 import com.sohu.jafka.utils.Utils;
+
+import java.nio.ByteBuffer;
 
 /**
  * UTF-8 bytes decoder

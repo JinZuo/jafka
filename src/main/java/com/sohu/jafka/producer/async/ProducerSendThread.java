@@ -17,7 +17,10 @@
 
 package com.sohu.jafka.producer.async;
 
-import static java.lang.String.format;
+import com.sohu.jafka.common.IllegalQueueStateException;
+import com.sohu.jafka.producer.SyncProducer;
+import com.sohu.jafka.producer.serializer.Encoder;
+import org.apache.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,11 +28,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.log4j.Logger;
-
-import com.sohu.jafka.common.IllegalQueueStateException;
-import com.sohu.jafka.producer.SyncProducer;
-import com.sohu.jafka.producer.serializer.Encoder;
+import static java.lang.String.format;
 
 /**
  * @author adyliu (imxylz@gmail.com)

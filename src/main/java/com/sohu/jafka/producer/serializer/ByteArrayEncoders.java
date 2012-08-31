@@ -17,9 +17,9 @@
 
 package com.sohu.jafka.producer.serializer;
 
-import java.nio.ByteBuffer;
-
 import com.sohu.jafka.message.Message;
+
+import java.nio.ByteBuffer;
 
 /**
  * a bytes en/decoder

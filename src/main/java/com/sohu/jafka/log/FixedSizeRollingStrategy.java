@@ -1,8 +1,8 @@
 package com.sohu.jafka.log;
 
-import static java.lang.String.format;
-
 import java.io.IOException;
+
+import static java.lang.String.format;
 
 /**
  * This strategy will be rolling file while it reaches the max file size.
