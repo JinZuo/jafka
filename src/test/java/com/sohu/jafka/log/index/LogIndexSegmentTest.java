@@ -61,6 +61,14 @@ public class LogIndexSegmentTest {
         System.out.println("file size is " + idxSegment.getSizeInBytes() + " B");
     }
 
+    @Test
+    public void testReadIndexSegment() throws IOException {
+        for(int i = 1;i <= idxSegment.getIndexNum();i++){
+            LogIndex idx = idxSegment.getLogIndexAt(i);
+            System.out.println(String.format("%d => msgId[%d],offset[%d]",i,idx.getMessageIdLongValue(),idx.getOffset()));
+        }
+    }
+
 
     @Test
     public void testIndexSegment() throws IOException {

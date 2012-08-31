@@ -58,12 +58,42 @@ public class IndexSegmentList {
 
     //todo:alfred:complete this method
     public List<LogIndexSegment> trunc(int count) {
-        return null;
+        if(count < 0){
+            throw new IllegalStateException("trunc count must be positive!");
+        }
+
+        while(true){
+            List<LogIndexSegment> currLst = getView();
+            int newLength = Math.max(currLst.size()-count,0);
+            List<LogIndexSegment> updatedLst = new ArrayList<LogIndexSegment>(currLst.subList(Math.min(count,currLst.size()-1),currLst.size()));
+            if(segmentsList.compareAndSet(currLst,updatedLst)){
+                return currLst.subList(0,currLst.size()-newLength);
+            }
+        }
     }
 
     //
     public List<LogIndexSegment> trunc(List<LogSegment> segments) {
-        return null;
+        if(segments.size() == 0){
+            return null;
+        }
+        while(true){
+            List<LogIndexSegment> currLst = getView();
+            int startSeg = 0;
+            for(LogSegment ls:segments){
+                if(ls == currLst.get(0).getLogSegment()){
+                    break;
+                }
+                startSeg++;
+            }
+            int truncCount = segments.size() - startSeg;
+            int newLength = Math.max(currLst.size()-truncCount,0);
+            List<LogIndexSegment> updatedLst = new ArrayList<LogIndexSegment>(currLst.subList(Math.max(truncCount,currLst.size()-1),currLst.size()));
+            if(segmentsList.compareAndSet(currLst,updatedLst)){
+                return currLst.subList(0,currLst.size()-newLength);
+            }
+
+        }
     }
 
     public int size(){

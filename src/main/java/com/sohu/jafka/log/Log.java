@@ -321,7 +321,7 @@ public class Log implements ILog {
                     //the message set in this ByteBufferMessageSet
                     long msgOffsetInSet = msgAndOffset.offset - msgAndOffset.message.serializedSize();
                     long fileOffset = writtenAndOffset[1]+msgOffsetInSet;
-                    logger.info("**********" + String.format("written[%d],msgOffset[%d],fileoffset[%d]---(%s)", writtenAndOffset[0], msgOffsetInSet, fileOffset, this.dir.getName()));
+                    //logger.info("**********" + String.format("written[%d],msgOffset[%d],fileoffset[%d]---(%s)", writtenAndOffset[0], msgOffsetInSet, fileOffset, this.dir.getName()));
                     if(msgAndOffset.message.compressionCodec() != CompressionCodec.NoCompressionCodec){
                         //if this message is a compressed message,add all its messages to the index with this message file offset
                        ByteBufferMessageSet msgSets = CompressionUtils.decompress(msgAndOffset.message);
@@ -535,6 +535,7 @@ public class Log implements ILog {
             // if we are deleting everything, create a new empty segment
             if (numToDelete == view.size()) {
                 if (view.get(numToDelete - 1).size() > 0) {
+                    logger.info("create a new empty segment because we are cleaning everything!");
                     roll();
                 } else {
                     // If the last segment to be deleted is empty and we roll the log, the new segment will have the same

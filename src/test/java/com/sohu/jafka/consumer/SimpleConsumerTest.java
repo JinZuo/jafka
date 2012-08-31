@@ -28,7 +28,6 @@ import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 
-import com.sohu.jafka.log.LogManager;
 import com.sohu.jafka.message.Message;
 import com.sohu.jafka.utils.Utils;
 import org.junit.After;
@@ -61,7 +60,7 @@ public class SimpleConsumerTest extends BaseJafkaServer {
     public SimpleConsumerTest() {
     }
 
-    final int partitions = 1;
+    final int partitions = 3;
 
     @Before
     public void init() {
@@ -72,12 +71,13 @@ public class SimpleConsumerTest extends BaseJafkaServer {
             props.put("brokerid","2");
             props.put("log.flush.interval", "1");
             props.put("log.default.flush.scheduler.interval.ms", "100");//flush to disk every 100ms
-            props.put("log.file.size", "512");//5k for rolling
+            props.put("log.file.size", "5120");//5k for rolling
+            //props.put("log.retention.size","1000000");
             props.put("num.partitions", "" + partitions);//default divided three partitions
             props.put("port", ""+jafkaPort);
             jafka = createJafka(props);
            //sendSomeMessages(1000,"demo","test");
-           sendSomeMessages(100,"demo");
+            sendSomeMessages(11113,"demo");
             flush(jafka);
             
             LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(1));
@@ -91,7 +91,7 @@ public class SimpleConsumerTest extends BaseJafkaServer {
         Properties producerConfig = new Properties();
         producerConfig.setProperty("broker.list", "0:localhost:" + jafkaPort);
         producerConfig.setProperty("serializer.class", StringEncoder.class.getName());
-        producerConfig.setProperty("compression.codec","1");
+        //producerConfig.setProperty("compression.codec","1");
         Producer<String, String> producer = new Producer<String, String>(new ProducerConfig(producerConfig));
         int index = 0;
         boolean over = false;
@@ -126,7 +126,7 @@ public class SimpleConsumerTest extends BaseJafkaServer {
         }
     }
 
-    
+
 //    @Test
 //    public void testCreatePartitions() throws IOException{
 //        int size = consumer.createPartitions("demo", partitions-1, false);
@@ -206,15 +206,23 @@ public class SimpleConsumerTest extends BaseJafkaServer {
     @Test
     public void testGetOffsetUsingIndex() throws IOException {
         long queryTime = System.currentTimeMillis() - 1000;
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        }
         System.out.println("queryTime is "+queryTime);
-        long offset = consumer.getOffsetUsingIndex("demo",0,queryTime);
-        System.out.println("offset is " + offset);
-        assertTrue(offset >= 0);
-        ByteBufferMessageSet messageSet = consumer.fetch(new FetchRequest("demo",0,offset,1000*1000));
+        long[] offsetArr = new long[3];
+        for(int i=0;i<partitions;i++){
+             offsetArr[i] = consumer.getOffset("demo", i, queryTime);
+            System.out.println(String.format("offset in partition(%d) is %d",i,offsetArr[i]));
+        }
+        //assertTrue(offset >= 0);
+        /*ByteBufferMessageSet messageSet = consumer.fetch(new FetchRequest("demo",0,offset,1000*1000));
         for(MessageAndOffset mas : messageSet){
             System.out.println(mas.message);
             assertTrue(mas.message.getMessageId().getTimestamp() >= queryTime);
-        }
+        }*/
     }
 
     /**

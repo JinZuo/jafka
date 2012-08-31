@@ -12,25 +12,29 @@ import java.util.Properties;
  */
 public class LogManagerTest extends BaseJafkaServer{
 
-
     private ServerConfig createServerConfig(){
         Properties props = new Properties();
-        props.setProperty("log.dir","/Users/rockybean/Documents/workspace/java/jafka-data/data1");
+        props.setProperty("log.dir","your log file");
+        props.put("log.retention.size","10000");
         ServerConfig config = new ServerConfig(props);
         return config;
     }
 
+    /*
     @Test
-    public void testLogManagerStart(){
-        LogManager logManager = new LogManager(createServerConfig(),null,1000,1000,true);
+    public void testLogManagerLoadAndCleanup() throws IOException {
+        LogManager logManager = new LogManager(createServerConfig(),null,1000000,1000000,false);
         try {
             logManager.load();
         } catch (IOException e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        logger.error(e);
         }
+        //test clean up
+        logManager.cleanupLogs();
         //logManager.startup();
         logManager.close();
     }
+    */
 
 
 }

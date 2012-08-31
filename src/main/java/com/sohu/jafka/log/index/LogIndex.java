@@ -33,7 +33,7 @@ public class LogIndex {
     @Override
     public String toString() {
         return "LogIndex{" +
-                "msgId=" + msgId +
+                "msgId=" + getMessageId() +
                 ", offset=" + offset +
                 '}';
     }

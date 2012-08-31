@@ -71,7 +71,7 @@ public class SimpleConsumer extends SimpleOperation implements IConsumer {
         return OffsetRequest.deserializeOffsetArray(response.k.buffer());
     }
 
-    public long getOffsetUsingIndex(String topic, int partition, long time) throws IOException {
+    public long getOffset(String topic, int partition, long time) throws IOException {
         if(Message.CurrentMagicValue < Message.MAGIC_VERSION_WITH_ID)
             throw new IllegalStateException("Your client message version is too old! Please upgrade your files!");
        KV<Receive, ErrorMapping> response = send(new OffsetRequest(topic,partition,time,-1));

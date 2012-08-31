@@ -63,7 +63,7 @@ public interface IConsumer extends Closeable {
      * @param time
      * @return offset or -1
      */
-    long getOffsetUsingIndex(String topic, int partition, long time) throws IOException;
+    long getOffset(String topic, int partition, long time) throws IOException;
     /**
      * get the latest offset
      * 

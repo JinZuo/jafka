@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
+import java.util.Iterator;
 
 /**
  * the log indexes in a jafka.idx file
@@ -51,7 +52,11 @@ public class LogIndexSegment {
         this.mutable = mutable;
 
         if(needRecovery){
-            recover();
+            try {
+                recover();
+            } catch (IOException e) {
+                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            }
         }
 
         try {
@@ -72,12 +77,78 @@ public class LogIndexSegment {
     //2.check the jafka file, and at the same time, check the offset of its idx file
     //3.if the idx file has errors, try to rebuild it.
     //      create when
-    public boolean recover(){
-        if(!recoverQuick()){
-            //recover slowly
+    public void recover() throws IOException {
+        checkMutable();
+        Iterator<MessageAndOffset> itr = logSegment.getMessageSet().iterator();
+
+        long len = channel.size()/16*16;
+        if(len < channel.size()){
+            channel.truncate(len);
         }
 
-        return false;
+        long validUpTo = 0;
+        long next = 0;
+        ByteBuffer idxBuffer = ByteBuffer.allocate(16);
+
+        while (itr.hasNext()){
+            MessageAndOffset mas = itr.next();
+            next = validateMessageIndex(mas,validUpTo,len,idxBuffer,-1);
+            if(next >= 0){
+                validUpTo = next;
+            }else{
+                len = validUpTo;
+                channel.truncate(len);
+                //try to recreate the message index
+                next = validateMessageIndex(mas,validUpTo,len,idxBuffer,-1);
+                if(next >= 0){
+                    validUpTo = next;
+                }else{
+                    throw new IllegalStateException("Cannot recover the message index for "+logSegment.getName());
+                }
+            }
+
+        }
+        channel.truncate(validUpTo);
+        channel.position(validUpTo);
+        logger.info("Recover message index successfully!");
+
+    }
+
+    private long validateMessageIndex(MessageAndOffset mas, long validUpTo, long len, ByteBuffer idxBuffer,long parentOffset) throws IOException {
+        long msgId = mas.message.messageId();
+        long fileOffset = parentOffset == -1?(mas.offset - mas.message.serializedSize()):parentOffset;
+
+        //compressed message
+        if(mas.message.compressionCodec() != CompressionCodec.NoCompressionCodec){
+            long processOffset = validUpTo;
+            ByteBufferMessageSet byteBufferMessageSet = CompressionUtils.decompress(mas.message);
+            for(MessageAndOffset tmpMas : byteBufferMessageSet){
+                processOffset = validateMessageIndex(tmpMas,processOffset,len,idxBuffer,fileOffset);
+                if(processOffset == -1){
+                    break;
+                }
+            }
+            //after verify all the messages in this compressed message,return the valid index offset
+            return processOffset;
+        }
+
+
+        if(validUpTo >= len){
+            append(msgId,fileOffset);
+            validUpTo += 16;
+        }else{
+            idxBuffer.rewind();
+            channel.read(idxBuffer,validUpTo);
+            idxBuffer.rewind();
+            long idxMsgId = idxBuffer.getLong();
+            long idxOffset = idxBuffer.getLong();
+            if(idxMsgId == msgId && idxOffset == fileOffset){
+                validUpTo += 16;
+            }else{
+                return -1;
+            }
+        }
+        return validUpTo;
     }
 
     private boolean recoverQuick() {
@@ -109,6 +180,7 @@ public class LogIndexSegment {
         }
     }
 
+    //todo:alfred:multi-thread write read problem??
     public LogIndex getLogIndexAt(int indexNum) throws IOException {
         if(this.indexNum <= 0 || indexNum <= 0 || indexNum > this.indexNum)
             return null;
@@ -151,7 +223,6 @@ public class LogIndexSegment {
      * @param time
      * @return
      */
-    //todo:alfred:getIndexNum会不会受到多线程的影响？有人写有人查的时候？copyonwrite!!!
     public long getFileOffsetByTime(long time) throws IOException {
         if(getIndexNum() == 0)
             return -1;
@@ -178,6 +249,7 @@ public class LogIndexSegment {
             mid = (low + high)/2;
             LogIndex leftIdx = getLogIndexAt(mid);
             if(leftIdx.getMessageIdLongValue() == expectedMsgId){
+                logger.debug("choose left:"+leftIdx);
                 return leftIdx;
             }
             if((mid + 1) > getIndexNum()){
@@ -187,6 +259,7 @@ public class LogIndexSegment {
 
             LogIndex rightIdx = getLogIndexAt(mid + 1);
             if(leftIdx.getMessageIdLongValue() < expectedMsgId && expectedMsgId <= rightIdx.getMessageIdLongValue()){
+                logger.debug("choose right:"+rightIdx);
                 return rightIdx;
             }
 
