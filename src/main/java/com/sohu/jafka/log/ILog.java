@@ -64,4 +64,6 @@ public interface ILog extends Closeable {
      * @return the offsets earlier than the offset request
      */
     List<Long> getOffsetsBefore(OffsetRequest offsetRequest);
+
+    long getOffsetUsingIndex(OffsetRequest offsetRequest);
 }

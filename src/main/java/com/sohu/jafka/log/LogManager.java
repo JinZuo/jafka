@@ -17,8 +17,6 @@
 
 package com.sohu.jafka.log;
 
-import static java.lang.String.format;
-
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
@@ -37,6 +35,7 @@ import org.apache.log4j.Logger;
 import com.sohu.jafka.api.OffsetRequest;
 import com.sohu.jafka.api.PartitionChooser;
 import com.sohu.jafka.common.InvalidPartitionException;
+import com.sohu.jafka.log.index.LogIndexSegment;
 import com.sohu.jafka.server.ServerConfig;
 import com.sohu.jafka.server.ServerRegister;
 import com.sohu.jafka.server.TopicTask;
@@ -48,6 +47,8 @@ import com.sohu.jafka.utils.Pool;
 import com.sohu.jafka.utils.Scheduler;
 import com.sohu.jafka.utils.TopicNameValidator;
 import com.sohu.jafka.utils.Utils;
+
+import static java.lang.String.format;
 
 /**
  * @author adyliu (imxylz@gmail.com)
@@ -159,7 +160,7 @@ public class LogManager implements PartitionChooser, Closeable {
                     final KV<String, Integer> topicPartion = Utils.getTopicPartition(topicNameAndPartition);
                     final String topic = topicPartion.k;
                     final int partition = topicPartion.v;
-                    Log log = new Log(dir, partition, this.rollingStategy, flushInterval, needRecovery,maxMessageSize);
+                    Log log = new Log(dir, partition, this.rollingStategy, flushInterval, needRecovery,this.maxMessageSize);
 
                     logs.putIfNotExists(topic, new Pool<Integer, Log>());
                     Pool<Integer, Log> parts = logs.get(topic);
@@ -248,7 +249,7 @@ public class LogManager implements PartitionChooser, Closeable {
      * 
      * @throws IOException
      */
-    private void cleanupLogs() throws IOException {
+    public void cleanupLogs() throws IOException {
         logger.trace("Beginning log cleanup...");
         int total = 0;
         Iterator<Log> iter = getLogIterator();
@@ -307,6 +308,29 @@ public class LogManager implements PartitionChooser, Closeable {
      * Attemps to delete all provided segments from a log and returns how many it was able to
      */
     private int deleteSegments(Log log, List<LogSegment> segments) {
+        //delete the index firstly
+        List<LogIndexSegment> idxSegmentLst = log.getIdxSegments().trunc(segments);
+
+        if(idxSegmentLst != null){
+        int idxTotal = 0;
+        for(LogIndexSegment idxSegment:idxSegmentLst){
+             try {
+                 idxSegment.close();
+             } catch (IOException e) {
+                 logger.warn("failed when close idx file "+idxSegment.getIdxFile().getAbsolutePath(),e);
+             }
+
+             if(idxSegment.getIdxFile().delete()){
+                 idxTotal ++;
+             }else{
+                 logger.warn("failed when delete idx file "+idxSegment.getIdxFile().getAbsolutePath());
+             }
+         }
+         logger.info(String.format("deleted %d log index segments!",idxTotal));
+        }
+
+
+        //delete log
         int total = 0;
         for (LogSegment segment : segments) {
             boolean deleted = false;
@@ -540,7 +564,7 @@ public class LogManager implements PartitionChooser, Closeable {
         synchronized (logCreationLock) {
             File d = new File(logDir, topic + "-" + partition);
             d.mkdirs();
-            return new Log(d, partition, this.rollingStategy, flushInterval, false,maxMessageSize);
+            return new Log(d, partition, this.rollingStategy, flushInterval, false,this.maxMessageSize);
         }
     }
 
@@ -569,6 +593,22 @@ public class LogManager implements PartitionChooser, Closeable {
         }
         return ILog.EMPTY_OFFSETS;
     }
+
+    /**
+     * get offset using index
+     * @param offsetRequest
+     * @return
+     */
+    public List<Long> getOffsetsUsingIndex(OffsetRequest offsetRequest) {
+        ILog log = getLog(offsetRequest.topic,offsetRequest.partition);
+        long offset = -1;
+        if(log != null)
+            offset = log.getOffsetUsingIndex(offsetRequest);
+        List<Long> rtnLst = new ArrayList<Long>();
+        rtnLst.add(offset);
+        return rtnLst;
+    }
+
 
    public Map<String, Integer> getTopicPartitionsMap() {
         return topicPartitionsMap;

@@ -26,7 +26,8 @@ package com.sohu.jafka.message;
  */
 public class MessageAndOffset {
 
-    public final Message message;
+    /*As we may change the message, this could not be final variable. By rockybean*/
+    public Message message;
 
     public final long offset;
 

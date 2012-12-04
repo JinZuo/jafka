@@ -69,7 +69,7 @@ public class ProducerRequest implements Request {
     /**
      * request messages
      */
-    public final ByteBufferMessageSet messages;
+    public ByteBufferMessageSet messages;
 
     /**
      * topic partition

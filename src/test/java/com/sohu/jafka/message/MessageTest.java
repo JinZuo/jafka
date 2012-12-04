@@ -21,6 +21,7 @@ import static org.junit.Assert.*;
 
 import java.nio.ByteBuffer;
 
+import com.sohu.jafka.server.Server;
 import org.junit.Test;
 
 import com.sohu.jafka.common.UnknownMagicByteException;
@@ -71,7 +72,7 @@ public class MessageTest {
     @Test
     public void testGetSizeInBytes() {
         Message m = new Message("demo".getBytes());
-        assertEquals(6+4, m.getSizeInBytes());
+        assertEquals(Message.headerSize(Message.CurrentMagicValue)+4, m.getSizeInBytes());
     }
 
     /**
@@ -80,7 +81,7 @@ public class MessageTest {
     @Test
     public void testMagic() {
         Message m = new Message("demo".getBytes());
-        assertEquals(1,m.magic());
+        assertEquals(Message.CurrentMagicValue,m.magic());
     }
 
     /**
@@ -146,7 +147,7 @@ public class MessageTest {
     @Test
     public void testSerializedSize() {
         Message m = new Message("demo".getBytes());
-        assertEquals(4+6+("demo".length()),m.serializedSize());
+        assertEquals((4+Message.headerSize(Message.CurrentMagicValue)+"demo".length()),m.serializedSize());
     }
 
     /**
@@ -159,5 +160,31 @@ public class MessageTest {
         m.serializeTo(buffer);
         assertFalse(buffer.hasRemaining());
     }
+
+    /**
+    * Test new message version with id
+    */
+    @Test
+    public void testNewMessageVersion(){
+        int partitionId = 3;
+        long msgId = MessageIdCenter.generateId(partitionId);
+        Message m =  new Message(Server.brokerId,msgId,"demo".getBytes());
+        if(Message.CurrentMagicValue >= Message.MAGIC_VERSION_WITH_ID){
+            int brokerId = m.brokerId();
+            assertEquals(Server.brokerId,brokerId);
+            MessageId messageId = m.getMessageId();
+            assertEquals(partitionId,messageId.getPartitionId());
+            assertEquals(0, messageId.getSequenceId());
+            assertTrue(100 > (System.currentTimeMillis() - messageId.getTimestamp()));
+        }
+
+        m = new Message("demo".getBytes());
+        assertEquals(-1,m.brokerId());
+        assertEquals(-1L,m.messageId());
+        assertEquals(null,m.getMessageId());
+        m = new Message(m.buffer);
+        assertEquals("demo",Utils.toString(m.payload(),"utf-8"));
+    }
+
 
 }

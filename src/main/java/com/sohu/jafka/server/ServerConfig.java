@@ -211,4 +211,8 @@ public class ServerConfig extends ZKConfig {
     public int getMaxMessageSize() {
         return getIntInRange(props,"max.message.size",1024*1024,0,Integer.MAX_VALUE);
     }
+    
+    public boolean getEnableIndex() {
+        return getBoolean(props,"enable.index",true);
+    }
 }

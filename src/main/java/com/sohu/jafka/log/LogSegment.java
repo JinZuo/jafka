@@ -93,6 +93,10 @@ public class LogSegment implements Range, Comparable<LogSegment> {
         return size() == 0;
     }
 
+    public boolean isMutable(){
+        return this.messageSet.isMutable();
+    }
+
     public boolean contains(long value) {
         long size = size();
         long start = start();

@@ -17,17 +17,17 @@
 
 package com.sohu.jafka.log;
 
-import static java.lang.String.format;
-
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -38,7 +38,11 @@ import org.apache.log4j.Logger;
 import com.sohu.jafka.api.OffsetRequest;
 import com.sohu.jafka.common.InvalidMessageSizeException;
 import com.sohu.jafka.common.OffsetOutOfRangeException;
+import com.sohu.jafka.log.index.IndexSegmentList;
+import com.sohu.jafka.log.index.LogIndexSegment;
 import com.sohu.jafka.message.ByteBufferMessageSet;
+import com.sohu.jafka.message.CompressionCodec;
+import com.sohu.jafka.message.CompressionUtils;
 import com.sohu.jafka.message.FileMessageSet;
 import com.sohu.jafka.message.InvalidMessageException;
 import com.sohu.jafka.message.MessageAndOffset;
@@ -48,6 +52,8 @@ import com.sohu.jafka.mx.LogStats;
 import com.sohu.jafka.utils.KV;
 import com.sohu.jafka.utils.Range;
 import com.sohu.jafka.utils.Utils;
+
+import static java.lang.String.format;
 
 /**
  * a log is a message sets with more than one files.
@@ -81,6 +87,8 @@ public class Log implements ILog {
     private final LogStats logStats = new LogStats(this);
 
     private final SegmentList segments;
+    //index segment list
+    private  IndexSegmentList idxSegments;
 
     public final int partition;
     private final int maxMessageSize;
@@ -102,6 +110,8 @@ public class Log implements ILog {
         this.logStats.setMbeanName("jafka:type=jafka.logs." + name);
         Utils.registerMBean(logStats);
         segments = loadSegments();
+        //load index segment list
+        loadIdxSegments(segments);
     }
 
     private SegmentList loadSegments() throws IOException {
@@ -144,6 +154,54 @@ public class Log implements ILog {
         return new SegmentList(name, accum);
     }
 
+
+    /**
+     * load existing index files for jafka file
+     * @param segments the loaded jafka file
+     * @throws IOException
+     */
+    private void loadIdxSegments(SegmentList segments) throws IOException {
+        List<LogSegment> segmentsList = segments.getView();
+        List<LogIndexSegment> idxSegmentList = new ArrayList<LogIndexSegment>();
+
+        boolean roll = false;
+        for(LogSegment logSegment:segmentsList){
+            String idxFilePath = logSegment.getFile().getAbsolutePath();
+            idxFilePath += LogIndexSegment.FILE_SUFFIX;
+            File file = new File(idxFilePath);
+            if(!file.exists()){
+                logger.warn("Loading index file ["+idxFilePath+"] failed => not exists!");
+                //if this is the last logsegment
+                if(logSegment.isMutable()){
+                    //If the last log segment file still have no index file, create a new jafka file with index file
+                    if(logSegment.size() != 0){
+                        roll = true;
+                    }else{
+                        //create an index file for this segment file
+                        file.createNewFile();
+                        //FileChannel channel = new RandomAccessFile(file,"rw").getChannel();
+                        FileChannel channel = Utils.openChannel(file,true);
+                        LogIndexSegment idxSegment = new LogIndexSegment(file,channel,true,logSegment,false);
+                        idxSegmentList.add(idxSegment);
+                    }
+                    break;
+                }
+            }else{
+                logger.info("Loading index file [" + idxFilePath + "] succeed!");
+                //FileChannel channel = logSegment.isMutable()?new RandomAccessFile(file,"rw").getChannel():new FileInputStream(file).getChannel();
+                FileChannel channel = Utils.openChannel(file,logSegment.isMutable());
+                LogIndexSegment idxSeg = new LogIndexSegment(file,channel,logSegment.isMutable(),logSegment,logSegment.isMutable()?needRecovery:false);
+                idxSegmentList.add(idxSeg);
+            }
+        }
+
+        idxSegments = new IndexSegmentList(name,idxSegmentList);
+        //roll if the last segment have no index file to keep the message number are same in log segment and index segment.
+        if(roll){
+            roll();
+        }
+    }
+
     /**
      * Check that the ranges and sizes add up, otherwise we have lost some data somewhere
      */
@@ -182,6 +240,14 @@ public class Log implements ILog {
                     seg.getMessageSet().close();
                 } catch (IOException e) {
                     logger.error("close file message set failed", e);
+                }
+            }
+
+            for(LogIndexSegment idxSeg : idxSegments.getView()){
+                try {
+                    idxSeg.close();
+                } catch (IOException e) {
+                    logger.error("close index file failed!",e);
                 }
             }
         }
@@ -243,6 +309,28 @@ public class Log implements ILog {
                     logger.trace(String.format("[%s,%s] save %d messages, bytes %d", name, lastSegment.getName(),
                             numberOfMessages, writtenAndOffset[0]));
                 }
+
+                //create index data for every message
+                Iterator<MessageAndOffset> iter = validMessages.internalIterator(true);
+                LogIndexSegment idxSegment = idxSegments.getLastView();
+                while(iter.hasNext()){
+                    MessageAndOffset msgAndOffset = iter.next();
+                    //the message set in this ByteBufferMessageSet
+                    long msgOffsetInSet = msgAndOffset.offset - msgAndOffset.message.serializedSize();
+                    long fileOffset = writtenAndOffset[1]+msgOffsetInSet;
+                    //logger.info("**********" + String.format("written[%d],msgOffset[%d],fileoffset[%d]---(%s)", writtenAndOffset[0], msgOffsetInSet, fileOffset, this.dir.getName()));
+                    if(msgAndOffset.message.compressionCodec() != CompressionCodec.NoCompressionCodec){
+                        //if this message is a compressed message,add all its messages to the index with this message file offset
+                       ByteBufferMessageSet msgSets = CompressionUtils.decompress(msgAndOffset.message);
+                       for(MessageAndOffset tmpMsgAndOffset:msgSets){
+                           idxSegment.append(tmpMsgAndOffset.message.messageId(),fileOffset);
+                       }
+                    }else{
+                        idxSegment.append(msgAndOffset.message.messageId(),fileOffset);
+                    }
+
+                }
+
                 maybeFlush(numberOfMessages);
                 maybeRoll(lastSegment);
 
@@ -282,6 +370,23 @@ public class Log implements ILog {
             }
             logger.info("Rolling log '" + name + "' to " + newFile.getName());
             segments.append(new LogSegment(newFile, new FileMessageSet(newFile, true), newOffset));
+
+            //create the index file
+            File idxFile = new File(newFile.getAbsolutePath()+LogIndexSegment.FILE_SUFFIX);
+            if(idxFile.exists()){
+                logger.warn("newly rolled index segment file "+idxFile.getName()+" already exists, deleting it first");
+                if(!idxFile.delete()){
+                    logger.error("delete exist file failed:"+idxFile);
+                    throw new RuntimeException("delete exist file failed:"+idxFile);
+                }
+            }
+            idxFile.createNewFile();
+            //FileChannel channel = new RandomAccessFile(idxFile,"rw").getChannel();
+            FileChannel channel = Utils.openChannel(idxFile,true);
+            LogIndexSegment idxSeg = new LogIndexSegment(idxFile,channel,true,segments.getLastView(),false);
+            idxSegments.append(idxSeg);
+
+            logger.info("Rolling log '" + name + "' to " + newFile.getName() + " and create its index file!");
         }
     }
 
@@ -319,6 +424,8 @@ public class Log implements ILog {
                         .currentTimeMillis());
             }
             segments.getLastView().getMessageSet().flush();
+            //flush index too
+            idxSegments.getLastView().flush();
             unflushed.set(0);
             lastflushedTime.set(System.currentTimeMillis());
         }
@@ -426,6 +533,7 @@ public class Log implements ILog {
             // if we are deleting everything, create a new empty segment
             if (numToDelete == view.size()) {
                 if (view.get(numToDelete - 1).size() > 0) {
+                    logger.info("create a new empty segment because we are cleaning everything!");
                     roll();
                 } else {
                     // If the last segment to be deleted is empty and we roll the log, the new segment will have the same
@@ -476,6 +584,22 @@ public class Log implements ILog {
     }
 
     @Override
+    public long getOffsetUsingIndex(OffsetRequest offsetRequest) {
+        long startTime = System.nanoTime();
+        LogIndexSegment idxSegment = idxSegments.getLogIndexSegmentByTime(offsetRequest.time);
+        logger.info(String.format("request time [%d] in [%s-%d] cost %d ns",offsetRequest.time,offsetRequest.topic,offsetRequest.partition,System.nanoTime()-startTime));
+        logger.info(String.format("in log [%s] ",this.toString()));
+        if(idxSegment == null)
+            return -1;
+        try {
+            return idxSegment.getOffsetByTime(offsetRequest.time);
+        } catch (IOException e) {
+            logger.error("io error",e);
+            return -1;
+        }
+    }
+
+    @Override
     public String toString() {
         return "Log [dir=" + dir + ", lastflushedTime=" + //
         new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(new Date(lastflushedTime.get())) + "]";
@@ -494,4 +618,13 @@ public class Log implements ILog {
     public long getLastSegmentAddressingSize() {
         return segments.getLastView().addressingSize();
     }
+
+    public IndexSegmentList getIdxSegments(){
+        return idxSegments;
+    }
+
+    public boolean canIdxTruncDirectly(){
+        return this.idxSegments.size() == this.segments.size();
+    }
+
 }

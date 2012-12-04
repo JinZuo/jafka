@@ -35,8 +35,8 @@ import com.sohu.jafka.message.ByteBufferMessageSet;
 public interface IConsumer extends Closeable {
 
     /**
-     * fetch some messages from the broker
-     * 
+     * fetch some messages from the broker in one jafka file
+     *
      * @param request request arguments
      * @return bytebuffer message
      * @throws IOException if an I/O error occurs
@@ -56,6 +56,14 @@ public interface IConsumer extends Closeable {
      */
     long[] getOffsetsBefore(String topic, int partition, long time, int maxNumOffsets) throws IOException;
 
+    /**
+     * return the offset equal to or bigger than the time
+     * @param topic
+     * @param partition
+     * @param time
+     * @return offset or -1
+     */
+    long getOffset(String topic, int partition, long time) throws IOException;
     /**
      * get the latest offset
      * 

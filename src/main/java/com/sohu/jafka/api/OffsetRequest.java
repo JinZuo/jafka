@@ -89,7 +89,7 @@ public class OffsetRequest implements Request {
      * @param topic topic name
      * @param partition partition id
      * @param time the log file created time {@link #time}
-     * @param maxNumOffsets the number of offsets
+     * @param maxNumOffsets the number of offsets or -1 means use index to search the nearest offset
      * @see #time
      */
     public OffsetRequest(String topic, int partition, long time, int maxNumOffsets) {

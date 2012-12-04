@@ -20,6 +20,7 @@ package com.sohu.jafka.producer;
 import java.util.List;
 
 import com.sohu.jafka.cluster.Partition;
+import com.sohu.jafka.message.Message;
 
 /**
  * message with topic and partition
@@ -36,12 +37,20 @@ public class ProducerPoolData<V> {
 
     public final List<V> data;
 
+    public byte magic = Message.MAGIC_VERSION2;
+
     public ProducerPoolData(String topic, Partition partition, List<V> data) {
         super();
         this.topic = topic;
         this.partition = partition;
         this.data = data;
     }
+
+    public ProducerPoolData(String topic, Partition partition, List<V> data,byte magic) {
+        this(topic,partition,data);
+        this.magic = magic;
+    }
+
 
     @Override
     public String toString() {

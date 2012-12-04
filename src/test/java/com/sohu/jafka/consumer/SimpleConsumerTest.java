@@ -28,6 +28,8 @@ import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 
+import com.sohu.jafka.message.Message;
+import com.sohu.jafka.utils.Utils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -66,13 +68,18 @@ public class SimpleConsumerTest extends BaseJafkaServer {
             Properties props = new Properties();
             //force flush message to disk
             //we will fetch nothing while messages have note been flushed to disk
+            props.put("brokerid","2");
             props.put("log.flush.interval", "1");
             props.put("log.default.flush.scheduler.interval.ms", "100");//flush to disk every 100ms
-            props.put("log.file.size", "5120");//5k for rolling
+            props.put("log.file.size", "100000000");//5k for rolling
+            //props.put("log.retention.size","1000000");
             props.put("num.partitions", "" + partitions);//default divided three partitions
             props.put("port", ""+jafkaPort);
             jafka = createJafka(props);
-            sendSomeMessages(1000,"demo","test");
+           //sendSomeMessages(1000,"demo");
+            long startTime = System.currentTimeMillis();
+            sendSomeMessages(1000,"demo");
+            System.out.println("send messages use time:"+(System.currentTimeMillis()-startTime)+"ms");
             flush(jafka);
             
             LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(1));
@@ -86,6 +93,7 @@ public class SimpleConsumerTest extends BaseJafkaServer {
         Properties producerConfig = new Properties();
         producerConfig.setProperty("broker.list", "0:localhost:" + jafkaPort);
         producerConfig.setProperty("serializer.class", StringEncoder.class.getName());
+        //producerConfig.setProperty("compression.codec","1");
         Producer<String, String> producer = new Producer<String, String>(new ProducerConfig(producerConfig));
         int index = 0;
         boolean over = false;
@@ -94,13 +102,14 @@ public class SimpleConsumerTest extends BaseJafkaServer {
             for(int x=0;x<data.length;x++) {
                 data[x] = new StringProducerData(topics[x]);
             }
-            int batch = 50;
+            int batch = 10;
             while (batch-- > 0 && !over) {
                 for(StringProducerData sd:data) {
-                    sd.add(sd.getTopic()+"#message#"+(index++));
+                    sd.add(sd.getTopic()+(index++));
                 }
                 over = index >= count;
             }
+
             for(StringProducerData sd:data) {
                 producer.send(sd);
             }
@@ -119,7 +128,7 @@ public class SimpleConsumerTest extends BaseJafkaServer {
         }
     }
 
-    
+
 //    @Test
 //    public void testCreatePartitions() throws IOException{
 //        int size = consumer.createPartitions("demo", partitions-1, false);
@@ -161,7 +170,11 @@ public class SimpleConsumerTest extends BaseJafkaServer {
             FetchRequest request = new FetchRequest("demo", i, 0, 1000 * 1000);
             ByteBufferMessageSet messages = consumer.fetch(request);
             for (MessageAndOffset msg : messages) {
-                //System.out.println("Receive message: " + Utils.toString(msg.message.payload(), "UTF-8"));
+                System.out.println("Receive message: " + Utils.toString(msg.message.payload(), "UTF-8"));
+                if(Message.CurrentMagicValue >= Message.MAGIC_VERSION_WITH_ID){
+                    assertEquals(2,msg.message.brokerId());
+                    assertEquals(i,msg.message.getMessageId().getPartitionId());
+                }
                 offset = Math.max(offset, msg.offset);
                 cnt++;
             }
@@ -180,7 +193,7 @@ public class SimpleConsumerTest extends BaseJafkaServer {
     public void testGetOffsetsBefore() throws IOException {
         int size = 0;
         long maxoffset = -1;
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < partitions; i++) {
             long[] offsets = consumer.getOffsetsBefore("demo", i, OffsetRequest.LATES_TTIME, 100);
             size += offsets.length;
             if (offsets.length > 0 && offsets[0] > maxoffset) {
@@ -190,6 +203,29 @@ public class SimpleConsumerTest extends BaseJafkaServer {
         System.out.println("demo largest offset: " + maxoffset);
         assertTrue(size > 0);
         assertTrue(maxoffset > 0);
+    }
+
+    @Test
+    public void testGetOffsetUsingIndex() throws IOException {
+        long queryTime = System.currentTimeMillis() - 5000;
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        }
+        System.out.println("queryTime is "+queryTime);
+        long[] offsetArr = new long[3];
+        for(int i=0;i<partitions;i++){
+            long startTime = System.currentTimeMillis();
+             offsetArr[i] = consumer.getOffset("demo", i, queryTime);
+            System.out.println(String.format("use Time[%d]!!!offset in partition(%d) is %d",(System.currentTimeMillis()-startTime),i,offsetArr[i]));
+        }
+        //assertTrue(offset >= 0);
+        /*ByteBufferMessageSet messageSet = consumer.fetch(new FetchRequest("demo",0,offset,1000*1000));
+        for(MessageAndOffset mas : messageSet){
+            System.out.println(mas.message);
+            assertTrue(mas.message.getMessageId().getTimestamp() >= queryTime);
+        }*/
     }
 
     /**

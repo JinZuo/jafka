@@ -17,13 +17,13 @@
 
 package com.sohu.jafka.message;
 
-import static java.lang.String.format;
-
-import java.nio.ByteBuffer;
-
 import com.sohu.jafka.api.ICalculable;
 import com.sohu.jafka.common.UnknownMagicByteException;
 import com.sohu.jafka.utils.Utils;
+
+import java.nio.ByteBuffer;
+
+import static java.lang.String.format;
 
 /**
  * * A message. The format of an N byte message is the following:
@@ -46,9 +46,16 @@ import com.sohu.jafka.utils.Utils;
  */
 public class Message implements ICalculable {
 
-    private static final byte MAGIC_VERSION2 = 1;
+    //expose message version number
+    public static final byte MAGIC_VERSION2 = 1;
 
-    public static final byte CurrentMagicValue = 1;
+    /**
+     * new message version providing message id
+     * @author rockybean(smilingrockybean@gmail.com)
+     */
+    public static final byte MAGIC_VERSION_WITH_ID = 64;
+
+    public static  byte CurrentMagicValue = MAGIC_VERSION_WITH_ID;
 
     public static final byte MAGIC_OFFSET = 0;
 
@@ -56,7 +63,18 @@ public class Message implements ICalculable {
 
     public static final byte ATTRIBUTE_OFFSET = MAGIC_OFFSET + MAGIC_LENGTH;
 
-    public static final byte ATTRIBUT_ELENGTH = 1;
+    public static final byte ATTRIBUTE_LENGTH = 1;
+
+    /* broker id in MAGIC_VERSION_WITH_ID*/
+    public static final byte BROKER_ID_OFFSET = ATTRIBUTE_OFFSET + ATTRIBUTE_LENGTH;
+    public static final byte BROKER_ID_LENGTH = 4;
+
+    /* message id in MAGIC_VERSION_WITH_ID*/
+    public static final byte MESSAGE_ID_OFFSET = BROKER_ID_OFFSET + BROKER_ID_LENGTH;
+    public static final byte MESSAGE_ID_LENGTH = 8;
+
+    /*the 4 bytes denoting the length of data*/
+    public static final int MESSAGE_DATA_LENGTH = 4;
 
     /**
      * Specifies the mask for the compression code. 2 bits to hold the
@@ -66,6 +84,7 @@ public class Message implements ICalculable {
 
     public static final int NoCompression = 0;
 
+
     /**
      * Computes the CRC value based on the magic byte
      * 
@@ -73,11 +92,12 @@ public class Message implements ICalculable {
      *        (compression)
      */
     public static int crcOffset(byte magic) {
-        switch (magic) {
-            case MAGIC_VERSION2:
-                return ATTRIBUTE_OFFSET + ATTRIBUT_ELENGTH;
-
-        }
+        //use if not switch because the later version is all based on MAGIC_VERSION_WITH_ID
+        //So these method do not need change then
+            if(magic == MAGIC_VERSION2)
+                return ATTRIBUTE_OFFSET + ATTRIBUTE_LENGTH;
+            if(magic >= MAGIC_VERSION_WITH_ID)
+                return MESSAGE_ID_OFFSET + MESSAGE_ID_LENGTH;
         throw new UnknownMagicByteException(format("Magic byte value of %d is unknown", magic));
     }
 
@@ -90,7 +110,15 @@ public class Message implements ICalculable {
      *        and 1 0 for no compression 1 for compression
      */
     public static int payloadOffset(byte magic) {
-        return crcOffset(magic) + CrcLength;
+        if(magic == MAGIC_VERSION2)
+            return msgDataLengthOffset(magic);
+        if(magic >= MAGIC_VERSION_WITH_ID)
+            return msgDataLengthOffset(magic) + MESSAGE_DATA_LENGTH;
+        throw new  UnknownMagicByteException(format("unkown magic bytes %d",magic));
+    }
+
+    public static int msgDataLengthOffset(byte magic){
+                return crcOffset(magic) + CrcLength;
     }
 
     /**
@@ -109,7 +137,7 @@ public class Message implements ICalculable {
      */
     public static final int MinHeaderSize = headerSize((byte) 1);
 
-    final ByteBuffer buffer;
+    ByteBuffer buffer;
 
     private final int messageSize;
 
@@ -118,17 +146,43 @@ public class Message implements ICalculable {
         this.messageSize = buffer.limit();
     }
 
-    public Message(long checksum, byte[] bytes, CompressionCodec compressionCodec) {
-        this(ByteBuffer.allocate(Message.headerSize(Message.CurrentMagicValue) + bytes.length));
+    public Message(int brokerId,long msgId,byte[] bytes){
+        this(brokerId,msgId,Utils.crc32(bytes),bytes,CompressionCodec.NoCompressionCodec);
+    }
+
+    public Message(int brokerId,long msgId,byte[] bytes,CompressionCodec codec){
+        this(brokerId,msgId,Utils.crc32(bytes),bytes,codec);
+    }
+    public Message(int brokerId,long msgId,long checksum,byte[] bytes,CompressionCodec compressionCodec){
+        this(ByteBuffer.allocate(headerSize(CurrentMagicValue)+bytes.length));
         buffer.put(CurrentMagicValue);
-        byte attributes = 0;
-        if (compressionCodec.codec > 0) {
-            attributes = (byte) (attributes | (CompressionCodeMask & compressionCodec.codec));
+        byte attr = 0;
+        if(compressionCodec.codec > 0){
+            attr = (byte)(attr | (compressionCodec.codec & CompressionCodeMask));
         }
-        buffer.put(attributes);
-        Utils.putUnsignedInt(buffer, checksum);
+        buffer.put(attr);
+        if(CurrentMagicValue >= MAGIC_VERSION_WITH_ID){
+            buffer.putInt(brokerId);
+            buffer.putLong(msgId);
+        }
+        Utils.putUnsignedInt(buffer,checksum);
+        //add msg data length
+        if(CurrentMagicValue >= MAGIC_VERSION_WITH_ID){
+            buffer.putInt(bytes.length);
+        }
         buffer.put(bytes);
         buffer.rewind();
+    }
+
+    /**
+     * construct message without partitionid and messageId
+     * used by producer
+     * @param checksum
+     * @param bytes
+     * @param compressionCodec
+     */
+    public Message(long checksum, byte[] bytes, CompressionCodec compressionCodec) {
+        this(-1,-1L,checksum,bytes,compressionCodec);
     }
 
     public Message(long checksum, byte[] bytes) {
@@ -141,6 +195,7 @@ public class Message implements ICalculable {
 
     /**
      * create no compression message
+     * used by producer
      * 
      * @param bytes message data
      * @see CompressionCodec#NoCompressionCodec
@@ -151,7 +206,8 @@ public class Message implements ICalculable {
 
     //
     public int getSizeInBytes() {
-        return messageSize;
+        //return messageSize;
+        return buffer.limit();
     }
 
     /**
@@ -164,11 +220,47 @@ public class Message implements ICalculable {
     }
 
     public int payloadSize() {
-        return getSizeInBytes() - headerSize(magic());
+       if(magic() == MAGIC_VERSION2)
+                return getSizeInBytes() - headerSize(magic());
+       if(magic() >= MAGIC_VERSION_WITH_ID)
+                return buffer.getInt(msgDataLengthOffset(magic()));
+       throw new UnknownMagicByteException(format("unkown magic byte %d",magic()));
     }
 
     public byte attributes() {
         return buffer.get(ATTRIBUTE_OFFSET);
+    }
+
+
+    /**
+     * return brokerId for MAGIC_VERSION_WITH_ID
+     * @return
+     */
+    public int brokerId(){
+        if(magic() < MAGIC_VERSION_WITH_ID){
+            return -1;
+        }
+        return buffer.getInt(BROKER_ID_OFFSET);
+    }
+
+
+    /**
+     * return messageId for MAGIC_VERSION_WITH_ID
+     * @return
+     */
+    public long messageId(){
+        if(magic() < MAGIC_VERSION_WITH_ID){
+            return -1;
+        }
+        return buffer.getLong(MESSAGE_ID_OFFSET);
+    }
+
+    public MessageId getMessageId(){
+        long id = messageId();
+        if(magic() < MAGIC_VERSION_WITH_ID || id == -1){
+            return null;
+        }
+        return new MessageId(id);
     }
 
     public CompressionCodec compressionCodec() {
@@ -176,10 +268,10 @@ public class Message implements ICalculable {
         switch (magicByte) {
             case 0:
                 return CompressionCodec.NoCompressionCodec;
-            case 1:
+            default:
                 return CompressionCodec.valueOf(buffer.get(ATTRIBUTE_OFFSET) & CompressionCodeMask);
         }
-        throw new RuntimeException("Invalid magic byte " + magicByte);
+        //throw new RuntimeException("Invalid magic byte " + magicByte);
     }
 
     public long checksum() {
@@ -215,8 +307,8 @@ public class Message implements ICalculable {
     //
     @Override
     public String toString() {
-        return format("message(magic = %d, attributes = %d, crc = %d, payload = %s)",//
-                magic(), attributes(), checksum(), payload());
+        return format("message(magic = %d, attributes = %d, crc = %d, payload = %s,messageId=[%s])",//
+                magic(), attributes(), checksum(), payload(),getMessageId());
     }
 
     @Override
@@ -236,4 +328,5 @@ public class Message implements ICalculable {
     public int hashCode() {
         return buffer.hashCode();
     }
+
 }

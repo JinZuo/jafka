@@ -98,6 +98,10 @@ public class SegmentList {
         return contents.get();
     }
 
+    public int size(){
+        return contents.get().size();
+    }
+
     @Override
     public String toString() {
         return "[" + name + "] " + getView();

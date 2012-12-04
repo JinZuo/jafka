@@ -246,4 +246,8 @@ public class ProducerPool<V> implements Closeable {
     public ProducerPoolData<V> getProducerPoolData(String topic, Partition bidPid, List<V> data) {
         return new ProducerPoolData<V>(topic, bidPid, data);
     }
+
+    public ProducerPoolData<V> getProducerPoolData(String topic, Partition partition, List<V> data, byte magic) {
+        return null;
+    }
 }

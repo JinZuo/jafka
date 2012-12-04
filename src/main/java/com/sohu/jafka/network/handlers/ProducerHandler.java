@@ -17,16 +17,28 @@
 
 package com.sohu.jafka.network.handlers;
 
-import static java.lang.String.format;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 import com.sohu.jafka.api.ProducerRequest;
 import com.sohu.jafka.api.RequestKeys;
 import com.sohu.jafka.log.ILog;
 import com.sohu.jafka.log.LogManager;
+import com.sohu.jafka.message.ByteBufferMessageSet;
+import com.sohu.jafka.message.CompressionCodec;
+import com.sohu.jafka.message.CompressionUtils;
+import com.sohu.jafka.message.Message;
 import com.sohu.jafka.message.MessageAndOffset;
+import com.sohu.jafka.message.MessageIdCenter;
 import com.sohu.jafka.mx.BrokerTopicStat;
 import com.sohu.jafka.network.Receive;
 import com.sohu.jafka.network.Send;
+import com.sohu.jafka.server.Server;
+
+import static java.lang.String.format;
+
 
 /**
  * handler for producer request
@@ -58,6 +70,7 @@ public class ProducerHandler extends AbstractHandler {
 
     protected void handleProducerRequest(ProducerRequest request) {
         int partition = request.getTranslatedPartition(logManager);
+        preProcessRequestByMessageMagicValue(request,partition);
         try {
             final ILog log = logManager.getOrCreateLog(request.topic, partition);
             log.append(request.messages);
@@ -89,5 +102,65 @@ public class ProducerHandler extends AbstractHandler {
             BrokerTopicStat.getBrokerAllTopicStat().recordFailedProduceRequest();
             throw new RuntimeException(e.getMessage(), e);
         }
+    }
+
+    /**
+     * process the messages in request before they are written to disk.
+     * @param request
+     * @author rockybean
+     */
+    private void preProcessRequestByMessageMagicValue(ProducerRequest request,int partition) {
+        //get id of this broker
+        int brokerId = Server.brokerId;
+        ByteBufferMessageSet messageSet = request.messages;
+        //recreate a new ByteBufferMessageSet
+        List<Message> msgLst = new ArrayList<Message>();
+        Iterator<MessageAndOffset> outerItr = messageSet.internalIterator(true);
+        while(outerItr.hasNext()){
+            MessageAndOffset messageAndOffset = outerItr.next();
+            Message msg = processMessage(messageAndOffset.message,brokerId,partition);
+            msgLst.add(msg);
+        }
+        request.messages = new ByteBufferMessageSet(toArray(msgLst));
+    }
+
+    private Message processMessage(Message msg,int brokerId,int partition) {
+        CompressionCodec codec = msg.compressionCodec();
+        if(codec == CompressionCodec.NoCompressionCodec){
+            byte magic = msg.magic();
+            //change message by message version if it is necessary
+            switch(magic){
+                case Message.MAGIC_VERSION2:
+                case Message.MAGIC_VERSION_WITH_ID:
+                //case Message.NEW_VERSION...
+                    //generate a messageId for the message
+                    long msgId = MessageIdCenter.generateId(partition);
+                    //get the data bytes in the message
+                    ByteBuffer buffer = msg.payload();
+                    byte[] bytes = new byte[buffer.remaining()];
+                    buffer.get(bytes);
+                    return new Message(brokerId,msgId,bytes);
+            }
+        }else{
+            logger.info("use compression codec!");
+            //compress message
+            List<Message> msgLst = new ArrayList<Message>();
+            Iterator<MessageAndOffset> itr = CompressionUtils.decompress(msg).internalIterator(true);
+            while(itr.hasNext()){
+                Message tmpMsg = processMessage(itr.next().message,brokerId,partition);
+                msgLst.add(tmpMsg);
+            }
+            long msgId = MessageIdCenter.generateId(partition);
+            return CompressionUtils.compress(toArray(msgLst), codec, brokerId, msgId);
+        }
+        return null;
+    }
+
+    private Message[] toArray(List<Message> msgLst) {
+        Message[] arr = new Message[msgLst.size()];
+        for(int i = 0;i < msgLst.size();i++){
+            arr[i] = msgLst.get(i);
+        }
+        return arr;
     }
 }
